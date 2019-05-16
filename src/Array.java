@@ -4,6 +4,327 @@ import java.util.stream.IntStream;
 
 public class Array {
 
+  private int[] sumdp;
+
+  public int maxSumAfterPartitioning(int[] A, int K) {
+    sumdp = new int[A.length];
+    Arrays.fill(sumdp, -1);
+    return maxSumAfterPartitioningUtil(0, A, K);
+  }
+
+  private int maxSumAfterPartitioningUtil(int idx, int[] a, int k) {
+    if (idx >= a.length) {
+      return 0;
+    }
+    if (sumdp[idx] != -1) {
+      return sumdp[idx];
+    }
+    int maxTillNow = -1;
+    int maxSum = -1;
+    for (int i = 1; i <= k && idx + i - 1 <= a.length - 1; i++) {
+      maxTillNow = Math.max(maxTillNow, a[idx + i - 1]);
+      maxSum = Math.max(maxSum, (maxTillNow * i) + maxSumAfterPartitioningUtil(idx + i, a, k));
+    }
+    sumdp[idx] = maxSum;
+    return sumdp[idx];
+  }
+
+  public int countRangeSum(int[] nums, int lower, int upper) {
+    SegmentTreeForCountRangeSum tree = new SegmentTreeForCountRangeSum(nums, lower, upper);
+    return tree.res;
+  }
+
+  public class SegmentTreeForCountRangeSum {
+
+    private int[] sumForInterval;
+    int lower, upper;
+    int res;
+    int n;
+
+    public SegmentTreeForCountRangeSum(int[] nums, int lower, int upper) {
+      n = nums.length;
+      this.lower = lower;
+      this.upper = upper;
+      sumForInterval = new int[4 * n];
+      res = 0;
+      buildTree(0, 0, n - 1, nums);
+    }
+
+    private void buildTree(int pos, int left, int right, int[] nums) {
+      if (left == right) {
+        sumForInterval[pos] = nums[left];
+        if (sumForInterval[pos] >= lower && sumForInterval[pos] <= upper) {
+          res++;
+        }
+        return;
+      }
+      int mid = (left + right) / 2;
+      buildTree(2 * pos + 1, left, mid, nums);
+      buildTree(2 * pos + 2, mid + 1, right, nums);
+      sumForInterval[pos] = sumForInterval[2 * pos + 1] + sumForInterval[2 * pos + 2];
+      if (sumForInterval[pos] >= lower && sumForInterval[pos] <= upper) {
+        res++;
+      }
+    }
+  }
+
+  public List<Integer> countSmallerUsingBST(int[] nums) {
+    TreeWithSmallerElementsCount tree = new TreeWithSmallerElementsCount();
+    List<Integer> res = new ArrayList<>();
+    for (int i = nums.length - 1; i >= 0; i--) {
+      res.add(tree.insert(nums[i]));
+    }
+    Collections.reverse(res);
+    return res;
+  }
+
+  public List<Integer> countSmallerUsingMergeSort(int[] nums) {
+    int n = nums.length;
+    int[] res = new int[n];
+    Arrays.fill(res, 0);
+    int[][] numsWithIndex = new int[n][2];
+    for (int i = 0; i < n; i++) {
+      numsWithIndex[i] = new int[]{i, nums[i]};
+    }
+    mergeSort(0, n - 1, numsWithIndex, res);
+    return Arrays.stream(res).boxed().collect(Collectors.toList());
+  }
+
+  private void mergeSort(int l, int r, int[][] numsWithIndex, int[] res) {
+    if (l >= r) {
+      return;
+    }
+    int mid = (l + r) / 2;
+    mergeSort(l, mid, numsWithIndex, res);
+    mergeSort(mid + 1, r, numsWithIndex, res);
+    int count = 0;
+    int i = l, j = mid + 1;
+    int[][] temp = new int[r - l + 1][2];
+    int idx = 0;
+    while (i <= mid && j <= r) {
+      if (numsWithIndex[j][1] < numsWithIndex[i][1]) {
+        count++;
+        temp[idx++] = numsWithIndex[j++];
+      } else {
+        res[numsWithIndex[i][0]] += count;
+        temp[idx++] = numsWithIndex[i++];
+      }
+    }
+    while (i <= mid) {
+      res[numsWithIndex[i][0]] += count;
+      temp[idx++] = numsWithIndex[i++];
+    }
+    while (j <= r) {
+      temp[idx++] = numsWithIndex[j++];
+    }
+    System.arraycopy(temp, 0, numsWithIndex, l, r - l + 1);
+  }
+
+  public int maxEnvelopes(int[][] arr) {
+    Arrays.sort(arr, new Comparator<int[]>() {
+      @Override
+      public int compare(int[] arr1, int[] arr2) {
+        if (arr1[0] == arr2[0])
+          return arr2[1] - arr1[1];
+        else
+          return arr1[0] - arr2[0];
+      }
+    });
+    int n = arr.length;
+    int[][] res = new int[n][2];
+    int len = 0;
+    for (int[] anArr : arr) {
+      int start = 0, end = len;
+      while (start < end) {
+        int mid = (start + end) / 2;
+        if (anArr[0] > res[mid][0] && anArr[1] > res[mid][1]) {
+          start = mid + 1;
+        } else {
+          end = mid;
+        }
+      }
+      res[start] = anArr;
+      if (start == len) {
+        len++;
+      }
+    }
+    return len;
+  }
+
+  private int compareEnvelopes(int[] o1, int[] o2) {
+    int c1 = o1[0] - o2[0], c2 = o1[1] - o2[1];
+    if (c1 != 0 && c2 != 0) {
+      // diff
+      if (c1 < 0 && c2 < 0) {
+        return -1;
+      }
+      if (c1 > 0 && c2 > 0) {
+        return 1;
+      }
+      return c1;
+    } else if (c2 != 0) {
+      return c2;
+    } else if (c1 != 0) {
+      return c1;
+    } else {
+      return 0;
+    }
+  }
+
+  public int lengthOfLIS(int[] nums) {
+    int n = nums.length;
+    int[] res = new int[n];
+    int len = 0;
+    for (int num : nums) {
+      int start = 0, end = len;
+      while (start < end) {
+        int mid = (start + end) / 2;
+        if (num > res[mid]) {
+          start = mid + 1;
+        } else {
+          end = mid;
+        }
+      }
+      res[start] = num;
+      if (start == len) {
+        len++;
+      }
+    }
+    return len;
+  }
+
+  public int[][] reconstructQueue(int[][] people) {
+    int n = people.length;
+    Arrays.sort(people, new Comparator<int[]>() {
+      @Override
+      public int compare(int[] o1, int[] o2) {
+        int c = o1[0] - o2[0];
+        if (c == 0) {
+          return o2[1] - o1[1];
+        }
+        return c;
+      }
+    });
+
+    int[][] res = new int[n][2];
+    List<int[]> counts = new ArrayList<>();
+    for (int i = 0; i < people.length; i++) {
+      counts.add(new int[]{i, people[i][1]});
+    }
+
+    int idx = 0;
+    while (idx < n) {
+      for (int[] cur : counts) {
+        if (cur[1] == 0) {
+          res[idx++] = people[cur[0]];
+          counts.remove(cur);
+          break;
+        } else {
+          cur[1]--;
+        }
+      }
+    }
+    return res;
+  }
+
+  public int[] maxSlidingWindow(int[] nums, int k) {
+    LinkedList<Integer> maxQueue = new LinkedList<>();
+    int n = nums.length;
+    if (n == 0 || k == 0) {
+      return new int[0];
+    }
+    int[] res = new int[n - k + 1];
+    int i = 0;
+    while (i < n) {
+      // keep adding to queue and maxQueue
+      while (!maxQueue.isEmpty() && maxQueue.peekLast() < nums[i]) {
+        maxQueue.pollLast();
+      }
+      maxQueue.add(nums[i]);
+
+
+      if (i - k + 1 >= 0) {
+        if (i - k >= 0 && nums[i - k] == maxQueue.peek()) {
+          maxQueue.poll();
+        }
+        res[i - k + 1] = maxQueue.peek();
+      }
+      i++;
+    }
+    return res;
+  }
+
+  public List<Integer> findDisappearedNumbers(int[] nums) {
+    for (int i = 0; i < nums.length; i++) {
+      int cur = Math.abs(nums[i]);
+      if (nums[cur - 1] > 0) {
+        nums[cur - 1] *= -1;
+      }
+    }
+    List<Integer> res = new ArrayList<>();
+    for (int i = 0; i < nums.length; i++) {
+      if (nums[i] > 0) {
+        res.add(i + 1);
+      }
+    }
+    return res;
+  }
+
+  public int maxDistToClosest(int[] seats) {
+    int maxDist = 1;
+    int prevOne = -1;
+    int n = seats.length;
+    for (int i = 0; i < n; i++) {
+      if (seats[i] == 1) {
+        if (prevOne != -1) {
+          int curDist = (i - prevOne) / 2;
+          maxDist = Math.max(maxDist, curDist);
+        } else {
+          maxDist = Math.max(maxDist, i);
+        }
+        prevOne = i;
+      }
+    }
+    int curDist = (n - 1 - prevOne);
+    maxDist = Math.max(maxDist, curDist);
+    return maxDist;
+  }
+
+  public int[] productExceptSelf(int[] nums) {
+    int[] res = new int[nums.length];
+    int left = 1;
+    for (int i = 0; i < nums.length; i++) {
+      res[i] = left;
+      left *= nums[i];
+    }
+    int right = 1;
+    for (int i = nums.length - 1; i >= 0; i--) {
+      res[i] *= right;
+      right *= nums[i];
+    }
+    return res;
+  }
+
+  public int maxUncrossedLines(int[] A, int[] B) {
+    int l1 = A.length, l2 = B.length;
+    int[][] lcs = new int[l1 + 1][l2 + 1];
+    for (int i = 0; i < l1; i++) {
+      lcs[i][0] = 0;
+    }
+    for (int i = 0; i < l2; i++) {
+      lcs[0][i] = 0;
+    }
+    for (int i = 1; i <= l1; i++) {
+      for (int j = 1; j <= l2; j++) {
+        lcs[i][j] = Math.max(lcs[i][j - 1], lcs[i - 1][j]);
+        if (A[i - 1] == B[j - 1]) {
+          lcs[i][j] = Math.max(lcs[i][j], lcs[i - 1][j - 1] + 1);
+        }
+      }
+    }
+    return lcs[l1][l2];
+  }
+
   public int[][] kClosest(int[][] points, int K) {
     PriorityQueue<double[]> pq = new PriorityQueue<>(new Comparator<double[]>() {
       @Override

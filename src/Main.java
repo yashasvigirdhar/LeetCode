@@ -5,8 +5,100 @@ import java.util.*;
 
 public class Main {
 
+
   public static void main(String[] args) {
-    new Graph().scheduleCourseDP(new int[][]{{7,16},{2,3},{3,12},{3,14},{10,19},{10,16},{6,8},{6,11},{3,13},{6,16}});
+    new Strings().longestDupSubstringRabinKarp("dbasdbasdbas");
+  }
+
+  public boolean isRobotBounded(String instructions) {
+    int x = 0, y = 0, dir = 0;
+    int count = 0;
+    while (count < 3) {
+      for (int i = 0; i < instructions.length(); i++) {
+        switch (instructions.charAt(i)) {
+          case 'G':
+            if (dir == 0) y++;
+            else if (dir == 1) x--;
+            else if (dir == 2) y--;
+            else if (dir == 3) x++;
+            break;
+          case 'L':
+            if (dir == 3) dir = 0;
+            else {
+              dir++;
+            }
+            break;
+          case 'R':
+            if (dir == 0) dir = 3;
+            else {
+              dir--;
+            }
+            break;
+        }
+      }
+      count++;
+    }
+    return (x == 0 && y == 0);
+  }
+
+  public boolean isBoomerang(int[][] points) {
+    Arrays.sort(points, (o1, o2) -> {
+      int c = Integer.compare(o1[0], o2[0]);
+      if (c == 0) {
+        return o1[1] - o2[1];
+      }
+      return c;
+    });
+    int numx = 1, numy = 1;
+    if (points[1][0] != points[0][0]) {
+      numx++;
+    }
+    if (points[2][0] != points[1][0]) {
+      numx++;
+    }
+    if (points[1][1] != points[0][1]) {
+      numy++;
+    }
+    if (points[2][1] != points[1][1]) {
+      numy++;
+    }
+    if (numx < 2 || numy < 2) {
+      return false;
+    }
+
+    int c = 1;
+    if (points[1][0] != points[0][0] || points[1][1] != points[0][1]) {
+      c++;
+    }
+    if (points[2][0] != points[1][0] || points[2][1] != points[1][1]) {
+      c++;
+    }
+    if (c < 3) {
+      return false;
+    }
+
+    if (points[1][0] - points[0][0] == points[2][0] - points[1][0] &&
+            points[1][1] - points[0][1] == points[2][1] - points[1][1]) {
+      return false;
+    }
+    return true;
+  }
+
+  public int[] numMovesStones(int a, int b, int c) {
+    int[] distances = new int[]{a, b, c};
+    Arrays.sort(distances);
+    int x = distances[1] - distances[0] - 1, y = distances[2] - distances[1] - 1;
+    int min = 0;
+    int minD = Math.min(x, y), maxD = Math.max(x, y);
+    if (minD == 0 && maxD == 0) {
+      min = 0;
+    } else if (minD == 0 || minD == 1) {
+      min = 1;
+    } else if (minD == 2) {
+      min = 2;
+    }
+    int max = x + y;
+    return new int[]{min, max};
   }
 
 

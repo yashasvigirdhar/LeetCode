@@ -1,4 +1,3 @@
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -830,7 +829,6 @@ public class Array2 {
     return ans;
   }
 
-  @NotNull
   private static ArrayList<Integer> getList(List<Integer> A, int start, int end, int i, int j) {
     ArrayList<Integer> arr = new ArrayList<>();
     arr.add(A.get(i));
@@ -846,6 +844,42 @@ public class Array2 {
       b = b.next;
     }
     System.out.println();
+  }
+
+  public static ListNode addTwoNumbersPractice(ListNode A, ListNode B) {
+    int l1 = size(A), l2 = size(B);
+    ListNode smaller, larger;
+    if (l1 > l2) {
+      larger = A;
+      smaller = B;
+    } else {
+      larger = B;
+      smaller = A;
+    }
+    ListNode res = larger;
+    int c = 0, curSum;
+    while (smaller.next != null) {
+      curSum = smaller.val + larger.val + c;
+      larger.val = curSum % 10;
+      c = curSum / 10;
+      smaller = smaller.next;
+      larger = larger.next;
+    }
+    curSum = smaller.val + larger.val + c;
+    larger.val = curSum % 10;
+    c = curSum / 10;
+    while (c != 0) {
+      if (larger.next == null) {
+        larger.next = new ListNode(c);
+        c = 0;
+      } else {
+        larger = larger.next;
+        curSum = larger.val + c;
+        larger.val = curSum % 10;
+        c = curSum / 10;
+      }
+    }
+    return res;
   }
 
   private static int size(ListNode b) {
