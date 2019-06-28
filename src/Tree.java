@@ -1,8 +1,116 @@
 import java.util.*;
+import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 
 public class Tree {
 
+  Map<Integer, int[]>[] dCache;
+
+  public int[] sumOfDistancesInTree(int n, int[][] edges) {
+    List<List<Integer>> graph = new ArrayList<>();
+    for (int i = 0; i < n; i++) {
+      graph.add(new ArrayList<>());
+    }
+
+    for (int[] edge : edges) {
+      graph.get(edge[0]).add(edge[1]);
+      graph.get(edge[1]).add(edge[0]);
+    }
+    dCache = new HashMap[n];
+    int[] distances = new int[n];
+    Arrays.fill(distances, 0);
+    for (int i = 0; i < n; i++) {
+      distances[i] = sumOfDistanceInTree(i, -1, graph)[0];
+    }
+    return distances;
+  }
+
+  private int[] sumOfDistanceInTree(int idx, int parent, List<List<Integer>> graph) {
+    int res = 0;
+    int numOfNodes = 1;
+    for (int neighbour : graph.get(idx)) {
+      if (neighbour == parent) {
+        continue;
+      }
+      int[] t;
+      if (dCache[idx] == null) {
+        dCache[idx] = new HashMap<>();
+      }
+
+      if (dCache[idx].containsKey(neighbour)) {
+        t = dCache[idx].get(neighbour);
+      } else {
+        t = sumOfDistanceInTree(neighbour, idx, graph);
+        dCache[idx].put(neighbour, t);
+      }
+      numOfNodes += t[1];
+      res += (t[0] + t[1]);
+    }
+
+    return new int[]{res, numOfNodes};
+  }
+
+  int minWidth, maxWidth;
+
+  public List<List<Integer>> verticalTraversal(TreeNode root) {
+    if (root == null) {
+      return new ArrayList<>();
+    }
+    Map<Integer, List<Pair<Integer, Integer>>> map = new HashMap<>();
+    minWidth = 0;
+    maxWidth = 0;
+    verticalTraversalUtil(root, 0, 0, map);
+    List<List<Integer>> res = new ArrayList<>();
+    for (int i = minWidth; i <= maxWidth; i++) {
+      List<Pair<Integer, Integer>> list = map.get(i);
+      list.sort(new Comparator<Pair<Integer, Integer>>() {
+        @Override
+        public int compare(Pair<Integer, Integer> o1, Pair<Integer, Integer> o2) {
+          if (o1.second.equals(o2.second)) {
+            return o1.first - o2.first;
+          }
+          return o1.second - o2.second;
+        }
+      });
+      List<Integer> l = new ArrayList<>();
+      for (Pair<Integer, Integer> p : list) {
+        l.add(p.first);
+      }
+      res.add(l);
+    }
+    return res;
+  }
+
+  private void verticalTraversalUtil(TreeNode root, int width, int depth, Map<Integer, List<Pair<Integer, Integer>>> map) {
+    if (root == null) {
+      return;
+    }
+    minWidth = Math.min(minWidth, width);
+    maxWidth = Math.max(maxWidth, width);
+    map.computeIfAbsent(width, k -> new ArrayList<>());
+    map.get(width).add(new Pair<>(root.val, depth));
+    verticalTraversalUtil(root.left, width - 1, depth + 1, map);
+    verticalTraversalUtil(root.right, width + 1, depth + 1, map);
+  }
+
+  public List<TreeNode> findDuplicateSubtrees(TreeNode root) {
+    Set<TreeNode> res = new HashSet<>();
+    serializeSubtrees(root, new HashMap<>(), res);
+    return new ArrayList<>(res);
+  }
+
+  private String serializeSubtrees(TreeNode root, Map<String, TreeNode> map, Set<TreeNode> res) {
+    if (root == null) {
+      return "#";
+    }
+    String cur = root.val + serializeSubtrees(root.left, map, res) + serializeSubtrees(root.right, map, res);
+    if (map.containsKey(cur)) {
+      res.add(map.get(cur));
+    } else {
+      map.put(cur, root);
+    }
+    return cur;
+  }
 
   public List<Integer> distanceK(TreeNode root, TreeNode target, int K) {
     Map<TreeNode, TreeNode> parentMap = new HashMap<>();
@@ -371,40 +479,6 @@ public class Tree {
     maxAncestorDiff(root.left, arr);
     maxAncestorDiff(root.right, arr);
     arr.remove(arr.size() - 1);
-  }
-
-
-  HashMap<Integer, List<Pair<Integer, Integer>>> map;
-  private int minWidth = Integer.MAX_VALUE, maxWidth = Integer.MIN_VALUE;
-
-  public List<List<Integer>> verticalOrder(TreeNode root) {
-    map = new HashMap<>();
-    verticalOrder(root, 0, 0);
-    List<List<Integer>> ans = new ArrayList<>();
-    for (int i = minWidth; i <= maxWidth; i++) {
-      List<Pair<Integer, Integer>> value = map.get(i);
-      value.sort(Comparator.comparingInt(o -> o.second));
-      List<Integer> toAdd = new ArrayList<>();
-      for (Pair<Integer, Integer> aValue : value) {
-        toAdd.add(aValue.first);
-      }
-      ans.add(toAdd);
-    }
-    return ans;
-  }
-
-  private void verticalOrder(TreeNode root, int width, int depth) {
-    if (root == null) {
-      return;
-    }
-    minWidth = Math.min(minWidth, width);
-    maxWidth = Math.max(maxWidth, width);
-    if (!map.containsKey(width)) {
-      map.put(width, new ArrayList<>());
-    }
-    map.get(width).add(new Pair<>(root.val, depth));
-    verticalOrder(root.left, width - 1, depth + 1);
-    verticalOrder(root.right, width + 1, depth + 1);
   }
 
   int ans;

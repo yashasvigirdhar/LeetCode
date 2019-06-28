@@ -1,6 +1,388 @@
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Strings {
+
+  public String rearrangeString(String s, int n) {
+    Map<Character, Integer> map = new HashMap<>();
+    for (int i = 0; i < s.length(); i++) {
+      map.put(s.charAt(i), map.getOrDefault(s.charAt(i), 0) + 1);
+    }
+    PriorityQueue<Map.Entry<Character, Integer>> pq = new PriorityQueue<>(new Comparator<Map.Entry<Character, Integer>>() {
+      @Override
+      public int compare(Map.Entry<Character, Integer> o1, Map.Entry<Character, Integer> o2) {
+        if (o2.getValue().equals(o1.getValue())) {
+          return o1.getKey().compareTo(o2.getKey());
+        }
+        return o2.getValue() - o1.getValue();
+      }
+    });
+    pq.addAll(map.entrySet());
+    StringBuilder sb = new StringBuilder();
+    while (!pq.isEmpty()) {
+      int k = n + 1;
+      List<Map.Entry<Character, Integer>> temp = new ArrayList<>();
+      while (k > 0 && !pq.isEmpty()) {
+        Map.Entry<Character, Integer> polled = pq.poll();
+        polled.setValue(polled.getValue() - 1);
+        k--;
+        sb.append(polled.getKey());
+        temp.add(polled);
+      }
+      if (sb.length() == s.length()) break;
+      if (k > 0) {
+        return "";
+      }
+      for (Map.Entry<Character, Integer> entry : temp) {
+        if (entry.getValue() > 0) {
+          pq.add(entry);
+        }
+      }
+    }
+    return sb.toString();
+  }
+
+  public String reorganizeString(String s) {
+    Map<Character, Integer> map = new HashMap<>();
+    for (int i = 0; i < s.length(); i++) {
+      map.put(s.charAt(i), map.getOrDefault(s.charAt(i), 0) + 1);
+    }
+    PriorityQueue<Map.Entry<Character, Integer>> pq = new PriorityQueue<>(new Comparator<Map.Entry<Character, Integer>>() {
+      @Override
+      public int compare(Map.Entry<Character, Integer> o1, Map.Entry<Character, Integer> o2) {
+        return o2.getValue() - o1.getValue();
+      }
+    });
+    pq.addAll(map.entrySet());
+    StringBuilder sb = new StringBuilder();
+    while (!pq.isEmpty()) {
+      int k = 2;
+      List<Map.Entry<Character, Integer>> temp = new ArrayList<>();
+      while (k > 0 && !pq.isEmpty()) {
+        Map.Entry<Character, Integer> polled = pq.poll();
+        polled.setValue(polled.getValue() - 1);
+        k--;
+        sb.append(polled.getKey());
+        temp.add(polled);
+      }
+      if (sb.length() == s.length()) break;
+      if (k > 0) {
+        return "";
+      }
+      for (Map.Entry<Character, Integer> entry : temp) {
+        if (entry.getValue() > 0) {
+          pq.add(entry);
+        }
+      }
+    }
+    return sb.toString();
+  }
+
+  public boolean areSentencesSimilarTwo(String[] words1, String[] words2, List<List<String>> pairs) {
+    Map<String, Set<String>> map = new HashMap<>();
+    for (List<String> pair : pairs) {
+      map.putIfAbsent(pair.get(0), new HashSet<>());
+      map.get(pair.get(0)).add(pair.get(1));
+
+      map.putIfAbsent(pair.get(1), new HashSet<>());
+      map.get(pair.get(1)).add(pair.get(0));
+    }
+    int l1 = words1.length, l2 = words2.length;
+    if (l1 != l2) {
+      return false;
+    }
+    for (int i = 0; i < l1; i++) {
+      String w1 = words1[i], w2 = words2[i];
+      if (w1.equals(w2)) {
+        continue;
+      }
+      if (pathExists(w1, w2, map)) {
+        continue;
+      } else {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private boolean pathExists(String w1, String w2, Map<String, Set<String>> map) {
+    Set<String> visited = new HashSet<>();
+    Deque<String> q = new ArrayDeque<>();
+    visited.add(w1);
+    q.addLast(w1);
+    while (!q.isEmpty()) {
+      String polled = q.pollFirst();
+      if (polled.equals(w2)) {
+        return true;
+      }
+      Set<String> neighbours = map.get(polled);
+      if (neighbours == null) {
+        continue;
+      }
+      for (String neighbour : neighbours) {
+        if (!visited.contains(neighbour)) {
+          visited.add(neighbour);
+          q.addLast(neighbour);
+        }
+      }
+    }
+    return false;
+  }
+
+  public boolean areSentencesSimilar(String[] words1, String[] words2, List<List<String>> pairs) {
+    Map<String, Set<String>> map = new HashMap<>();
+    for (List<String> pair : pairs) {
+      map.putIfAbsent(pair.get(0), new HashSet<>());
+      map.get(pair.get(0)).add(pair.get(1));
+
+      map.putIfAbsent(pair.get(1), new HashSet<>());
+      map.get(pair.get(1)).add(pair.get(0));
+    }
+    int l1 = words1.length, l2 = words2.length;
+    if (l1 != l2) {
+      return false;
+    }
+    for (int i = 0; i < l1; i++) {
+      String w1 = words1[i], w2 = words2[i];
+      if (w1.equals(w2)) {
+        continue;
+      }
+      if ((map.containsKey(w1) && map.get(w1).contains(w2)) ||
+          (map.containsKey(w2) && map.get(w2).contains(w1))) {
+        continue;
+      } else {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public int calculate(String s) {
+    Map<Character, Integer> prio = new HashMap<>();
+    prio.put('/', 2);
+    prio.put('*', 2);
+    prio.put('+', 3);
+    prio.put('-', 3);
+    prio.put('(', 4);
+    Deque<Integer> nums = new ArrayDeque<>();
+    Deque<Character> ops = new ArrayDeque<>();
+    int i = 0;
+    while (i < s.length()) {
+      if (s.charAt(i) == ' ') {
+        i++;
+      } else if (Character.isDigit(s.charAt(i))) {
+        int b = i;
+        while (i < s.length() && Character.isDigit(s.charAt(i))) {
+          i++;
+        }
+        if (Long.parseLong(s.substring(b, i)) > Integer.MAX_VALUE) {
+          ops.pollFirst();
+          ops.addFirst('+');
+          nums.addFirst(Integer.MIN_VALUE);
+        } else {
+          int num = Integer.parseInt(s.substring(b, i));
+          nums.addFirst(num);
+        }
+      } else if (s.charAt(i) == '(') {
+        ops.addFirst(s.charAt(i));
+        i++;
+      } else if (s.charAt(i) == ')') {
+        while (ops.peekFirst() != '(') {
+          evaluateNextExpression(nums, ops);
+        }
+        ops.pollFirst();
+        i++;
+      } else {
+        while (!ops.isEmpty() && prio.get(ops.peekFirst()) <= prio.get(s.charAt(i))) {
+          evaluateNextExpression(nums, ops);
+        }
+        ops.addFirst(s.charAt(i));
+        i++;
+      }
+
+    }
+    while (!ops.isEmpty()) {
+      evaluateNextExpression(nums, ops);
+    }
+    return nums.pollFirst();
+  }
+
+  public int calculateII(String s) {
+    Map<Character, Integer> prio = new HashMap<>();
+    prio.put('/', 1);
+    prio.put('*', 2);
+    prio.put('+', 3);
+    prio.put('-', 3);
+    Deque<Integer> nums = new ArrayDeque<>();
+    Deque<Character> ops = new ArrayDeque<>();
+    int i = 0;
+    while (i < s.length()) {
+      if (s.charAt(i) == ' ') {
+        i++;
+      } else if (Character.isDigit(s.charAt(i))) {
+        int b = i;
+        while (i < s.length() && Character.isDigit(s.charAt(i))) {
+          i++;
+        }
+        int num = Integer.parseInt(s.substring(b, i));
+        nums.addFirst(num);
+      } else {
+        while (!ops.isEmpty() && prio.get(ops.peekFirst()) < prio.get(s.charAt(i))) {
+          evaluateNextExpression(nums, ops);
+        }
+        ops.addFirst(s.charAt(i));
+        i++;
+      }
+
+    }
+    while (!ops.isEmpty()) {
+      evaluateNextExpression(nums, ops);
+    }
+    return nums.pollFirst();
+  }
+
+  private void evaluateNextExpression(Deque<Integer> nums, Deque<Character> ops) {
+    int symbol = ops.pollFirst();
+    int num1 = nums.pollFirst(), num2 = nums.pollFirst();
+    int res = 0;
+    switch (symbol) {
+      case '*':
+        res = num2 * num1;
+        break;
+      case '/':
+        res = num2 / num1;
+        break;
+      case '+':
+        res = num2 + num1;
+        break;
+      case '-':
+        res = num2 - num1;
+        break;
+    }
+    nums.addFirst(res);
+  }
+
+  public int compress(char[] chars) {
+    int newIdx = -1;
+    int idx = 0;
+    while (idx < chars.length) {
+      char curChar = chars[idx];
+      int start = idx;
+      while (idx < chars.length && chars[idx] == curChar) {
+        idx++;
+      }
+      int len = idx - start;
+      chars[++newIdx] = curChar;
+      if (len > 1) {
+        // store count
+        Deque<Integer> stack = new ArrayDeque<>();
+        while (len > 0) {
+          stack.addFirst(len % 10);
+          len /= 10;
+        }
+        while (!stack.isEmpty()) {
+          chars[++newIdx] = (char) (stack.pollFirst() + '0');
+        }
+      }
+    }
+    return newIdx + 1;
+  }
+
+  public List<String> subdomainVisits(String[] cpdomains) {
+    Map<String, Integer> map = new HashMap<>();
+    for (String s : cpdomains) {
+      String[] s1 = s.split(" ");
+      String domain = s1[1];
+      int count = Integer.parseInt(s1[0]);
+      map.put(domain, map.getOrDefault(domain, 0) + count);
+      for (int i = 1; i < domain.length(); i++) {
+        if (domain.charAt(i) == '.') {
+          map.put(domain.substring(i + 1), map.getOrDefault(domain.substring(i + 1), 0) + count);
+        }
+      }
+    }
+    return map.entrySet()
+        .stream()
+        .map(entry -> entry.getValue() + " " + entry.getKey())
+        .collect(Collectors.toList());
+  }
+
+  public String decodeString(String s) {
+    Deque<Pair<Integer, Integer>> nums = new ArrayDeque<>();
+    Deque<Pair<String, Integer>> strings = new ArrayDeque<>();
+    StringBuilder current = new StringBuilder();
+    int currentBIdx = -1;
+    for (int i = 0; i < s.length(); i++) {
+      if (Character.isDigit(s.charAt(i))) {
+        if (current.length() > 0) {
+          strings.push(new Pair<>(current.toString(), currentBIdx));
+          current.setLength(0);
+          currentBIdx = -1;
+        }
+        int b = i;
+        while (Character.isDigit(s.charAt(i))) {
+          i++;
+        }
+        int n = Integer.parseInt(s.substring(b, i));
+        nums.push(new Pair<>(n, i));
+      } else if (s.charAt(i) == ']') {
+        Pair<Integer, Integer> popped = nums.pop();
+        int multiplier = popped.first - 1;
+        int idx = popped.second;
+        while (!strings.isEmpty() && strings.peek().second > idx) {
+          current.insert(0, strings.pop().first);
+        }
+        String toAppend = current.toString();
+        for (int c = 0; c < multiplier; c++) {
+          current.append(toAppend);
+        }
+      } else if (s.charAt(i) == '[') {
+      } else {
+        if (currentBIdx == -1) {
+          currentBIdx = i;
+        }
+        current.append(s.charAt(i));
+      }
+    }
+    while (!strings.isEmpty()) {
+      current.insert(0, strings.pop().first);
+    }
+    return current.toString();
+  }
+
+  public String removeDuplicates(String s) {
+    char[] chars = s.toCharArray();
+    int[] pos = new int[chars.length];
+    pos[0] = -1;
+    for (int i = 1; i < chars.length; i++) {
+      if (chars[i] == '$') {
+        continue;
+      }
+      int prev = getPrev(chars, pos, i);
+      while (i < chars.length && prev >= 0 && chars[i] == chars[prev]) {
+        pos[i] = prev;
+        chars[i] = '$';
+        chars[prev] = '$';
+        i++;
+        prev = getPrev(chars, pos, i);
+      }
+    }
+    StringBuilder b = new StringBuilder();
+    for (char cc : chars) {
+      if (cc != '$') {
+        b.append(cc);
+      }
+    }
+    return b.toString();
+  }
+
+  private int getPrev(char[] chars, int[] pos, int i) {
+    int prev = i - 1;
+    while (prev >= 0 && chars[prev] == '$') {
+      prev--;
+    }
+    return prev;
+  }
 
   public String mostCommonWord(String paragraph, String[] banned) {
     HashSet<String> ban = new HashSet<>(Arrays.asList(banned));
@@ -896,7 +1278,7 @@ public class Strings {
 
   private boolean isVowel(char charAt) {
     return charAt == 'a' || charAt == 'e' || charAt == 'i' || charAt == 'o' || charAt == 'u'
-            || charAt == 'A' || charAt == 'E' || charAt == 'I' || charAt == 'O' || charAt == 'U';
+        || charAt == 'A' || charAt == 'E' || charAt == 'I' || charAt == 'O' || charAt == 'U';
   }
 
   public String minWindow(String s, String t) {

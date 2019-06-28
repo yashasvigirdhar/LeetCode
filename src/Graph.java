@@ -2,6 +2,177 @@ import java.util.*;
 
 public class Graph {
 
+  public List<Integer> eventualSafeNodes(int[][] graph) {
+    int n = graph.length;
+    int[] safe = new int[n];
+    Arrays.fill(safe, -1);
+    for (int i = 0; i < n; i++) {
+      if (safe[i] == -1) {
+        eventualSafeNodesUtil(i, graph, safe);
+      }
+    }
+    List<Integer> res = new ArrayList<>();
+    for (int i = 0; i < n; i++) {
+      if (safe[i] == 1) {
+        res.add(i);
+      }
+    }
+    return res;
+  }
+
+  private boolean eventualSafeNodesUtil(int idx, int[][] graph, int[] safe) {
+    if (safe[idx] != -1) {
+      return safe[idx] == 1;
+    }
+    safe[idx] = 0;
+    for (int neighbour : graph[idx]) {
+      if (!eventualSafeNodesUtil(neighbour, graph, safe)) {
+        safe[idx] = 0;
+        return false;
+      }
+
+    }
+    safe[idx] = 1;
+    return true;
+  }
+
+  public boolean possibleBipartitionUsingDFS(int n, int[][] dislikes) {
+    List<List<Integer>> g = new ArrayList<>();
+    for (int i = 0; i <= n; i++) {
+      g.add(new ArrayList<>());
+    }
+    for (int[] d : dislikes) {
+      g.get(d[0]).add(d[1]);
+      g.get(d[1]).add(d[0]);
+    }
+
+    int[] color = new int[n + 1];
+    Arrays.fill(color, 0);
+    for (int i = 1; i <= n; i++) {
+      if (color[i] != 0) {
+        continue;
+      }
+      color[i] = 1;
+      Deque<Integer> stack = new ArrayDeque<>();
+      stack.addFirst(i);
+      while (!stack.isEmpty()) {
+        Integer peek = stack.peekFirst();
+        boolean unvisitedFound = false;
+        for (int neighbour : g.get(peek)) {
+          if (color[neighbour] == 0) {
+            unvisitedFound = true;
+            color[neighbour] = -1 * color[peek];
+            stack.addFirst(neighbour);
+            break;
+          }
+          if (color[neighbour] == color[peek]) {
+            return false;
+          }
+        }
+        if (!unvisitedFound) {
+          stack.pollFirst();
+        }
+      }
+    }
+    return true;
+  }
+
+  public boolean possibleBipartitionUsingBFS(int n, int[][] dislikes) {
+    List<List<Integer>> g = new ArrayList<>();
+    for (int i = 0; i <= n; i++) {
+      g.add(new ArrayList<>());
+    }
+    for (int[] d : dislikes) {
+      g.get(d[0]).add(d[1]);
+      g.get(d[1]).add(d[0]);
+    }
+
+    int[] color = new int[n + 1];
+    Arrays.fill(color, 0);
+    for (int i = 1; i <= n; i++) {
+      if (color[i] != 0) {
+        continue;
+      }
+      Deque<Integer> q = new ArrayDeque<>();
+      color[i] = 1;
+      q.addLast(i);
+      while (!q.isEmpty()) {
+        Integer polled = q.pollFirst();
+        for (int neighbour : g.get(polled)) {
+          if (color[neighbour] == color[polled]) {
+            return false;
+          }
+          if (color[neighbour] == 0) {
+            if (!assignColor(color, polled, neighbour, g)) {
+              return false;
+            }
+            q.addLast(neighbour);
+          }
+        }
+      }
+    }
+    return true;
+  }
+
+  private boolean assignColor(int[] color, Integer polled, int neighbour, List<List<Integer>> g) {
+    Set<Integer> distinctColors = new HashSet<>();
+    for (int n : g.get(neighbour)) {
+      if (color[n] != 0) {
+        distinctColors.add(color[n]);
+      }
+    }
+    if (distinctColors.size() < 2) {
+      color[neighbour] = -1 * color[polled];
+      return true;
+    }
+    return false;
+  }
+
+  public int numberOfPatterns(int m, int n) {
+    int[][] skip = new int[10][10];
+    skip[1][3] = skip[3][1] = 2;
+    skip[1][7] = skip[7][1] = 4;
+    skip[3][9] = skip[9][3] = 6;
+    skip[7][9] = skip[9][7] = 8;
+    skip[1][9] = skip[9][1] = skip[2][8] = skip[8][2] = skip[3][7] = skip[7][3] = skip[4][6] = skip[6][4] = 5;
+
+    Deque<LockNode> q = new ArrayDeque<>();
+    for (int i = 1; i <= 9; i++) {
+      q.addLast(new LockNode(i, 1, new HashSet<>(Collections.singletonList(i))));
+    }
+    int res = 0;
+    while (!q.isEmpty()) {
+      LockNode polled = q.pollFirst();
+      if (polled.pathLength >= m) {
+        res++;
+      }
+      if (polled.pathLength == n) {
+        continue;
+      }
+      for (int i = 1; i <= 9; i++) {
+        if (!polled.visited.contains(i)
+            && (skip[polled.val][i] == 0 || polled.visited.contains(skip[polled.val][i]))) {
+          Set<Integer> newVisited = new HashSet<>(polled.visited);
+          newVisited.add(i);
+          q.addLast(new LockNode(i, polled.pathLength + 1, newVisited));
+        }
+
+      }
+    }
+    return res;
+  }
+
+  class LockNode {
+    int val;
+    int pathLength;
+    Set<Integer> visited;
+
+    public LockNode(int val, int pathLength, Set<Integer> visited) {
+      this.val = val;
+      this.pathLength = pathLength;
+      this.visited = visited;
+    }
+  }
 
   public int scheduleCourseDP(int[][] courses) {
     Arrays.sort(courses, Comparator.comparingInt(o -> o[1]));
@@ -386,8 +557,8 @@ public class Graph {
       }
       for (int[] neighbours : graph.get(curCity)) {
         if (costTillNow + neighbours[1] < cost[neighbours[0]]
-                && costTillNow + neighbours[1] < minCost
-                && citiesTillNow + 1 - 2 <= k) {
+            && costTillNow + neighbours[1] < minCost
+            && citiesTillNow + 1 - 2 <= k) {
           cost[neighbours[0]] = costTillNow + neighbours[1];
           queue.add(new int[]{neighbours[0], costTillNow + neighbours[1], citiesTillNow + 1});
         }
@@ -810,7 +981,7 @@ public class Graph {
             for (int idx = 0; idx < 4; idx++) {
               int newX = x + ivalues[idx], newY = y + jvalues[idx];
               if (isValidPoint(m, n, newX, newY)
-                      && grid[newX][newY] == '1') {
+                  && grid[newX][newY] == '1') {
                 grid[newX][newY] = '0';
                 st.push(new Point(newX, newY));
               }
@@ -1030,7 +1201,7 @@ public class Graph {
       if (o == null || getClass() != o.getClass()) return false;
       Point point = (Point) o;
       return x == point.x &&
-              y == point.y;
+          y == point.y;
     }
 
     @Override

@@ -6,7 +6,191 @@ import java.util.*;
 public class Main {
 
   public static void main(String[] args) {
-    new Graph().scheduleCourseDP(new int[][]{{7,16},{2,3},{3,12},{3,14},{10,19},{10,16},{6,8},{6,11},{3,13},{6,16}});
+    new Main().leastInterval(new char[]{'A','A','A','B','C'}, 2);
+  }
+
+  public int leastInterval(char[] tasks, int n) {
+    PriorityQueue<Integer> pq = new PriorityQueue<>(new Comparator<Integer>() {
+      @Override
+      public int compare(Integer o1, Integer o2) {
+        return o2 - o1;
+      }
+    });
+    Map<Character, Integer> map = new HashMap<>();
+    for (char c : tasks) {
+      map.put(c, map.getOrDefault(c, 0) + 1);
+    }
+    pq.addAll(map.values());
+    int res = 0;
+    while (!pq.isEmpty()){
+      int k = n;
+      List<Integer> temp = new ArrayList<>();
+      while (k >= 0 && !pq.isEmpty()){
+        Integer poll = pq.poll();
+        poll--;
+        temp.add(poll);
+        k--;
+        res++;
+      }
+      for(int t: temp){
+        if(t > 0){
+          pq.add(t);
+        }
+      }
+
+      if(pq.isEmpty()) break;
+
+      res += k;
+    }
+    return res;
+  }
+
+  public boolean carPooling(int[][] trips, int capacity) {
+    List<int[]> times = new ArrayList<>();
+    for (int[] trip : trips) {
+      times.add(new int[]{trip[1], trip[0]});
+      times.add(new int[]{trip[2], -trip[0]});
+    }
+    times.sort(new Comparator<int[]>() {
+
+      @Override
+      public int compare(int[] o1, int[] o2) {
+        if (o1[0] != o2[0]) {
+          return o1[0] - o2[0];
+        }
+        return o1[1] - o2[1];
+      }
+    });
+    int c = 0;
+    for (int[] trip : trips) {
+      c += trip[1];
+      if (c > capacity) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public class NestedIterator implements Iterator<Integer> {
+
+    Deque<NestedInteger> deque;
+
+    public NestedIterator(List<NestedInteger> nestedList) {
+      deque = new ArrayDeque<>();
+      flattenList(nestedList);
+    }
+
+    @Override
+    public Integer next() {
+      return deque.pop().getInteger();
+    }
+
+    @Override
+    public boolean hasNext() {
+      while (!deque.isEmpty()) {
+        if (deque.peek().isInteger()) return true;
+        flattenList(deque.pop().getList());
+      }
+      return false;
+    }
+
+    void flattenList(List<NestedInteger> list) {
+      for (int i = list.size() - 1; i >= 0; i--) {
+        deque.push(list.get(i));
+      }
+    }
+  }
+
+  public int getImportance(List<Employee> employees, int id) {
+    Map<Integer, List<Integer>> relation = new HashMap<>();
+    Map<Integer, Integer> importance = new HashMap<>();
+    for (Employee employee : employees) {
+      relation.put(employee.id, employee.subordinates);
+      importance.put(employee.id, employee.importance);
+    }
+    Queue<Integer> q = new LinkedList<>();
+    q.add(id);
+    int res = 0;
+    while (!q.isEmpty()) {
+      Integer polled = q.poll();
+      res += importance.get(polled);
+      q.addAll(relation.get(polled));
+    }
+    return res;
+  }
+
+  class Employee {
+    // It's the unique id of each node;
+    // unique id of this employee
+    public int id;
+    // the importance value of this employee
+    public int importance;
+    // the id of direct subordinates
+    public List<Integer> subordinates;
+  }
+
+  public int depthSum(List<NestedInteger> nestedList) {
+    return depthSum(nestedList, 1);
+  }
+
+  private int depthSum(List<NestedInteger> list, int multiplier) {
+    int sum = 0;
+    for (NestedInteger nestedInteger : list) {
+      if (nestedInteger.isInteger()) {
+        sum += (nestedInteger.getInteger() * multiplier);
+      } else {
+        sum += depthSum(nestedInteger.getList(), multiplier + 1);
+      }
+    }
+    return sum;
+  }
+
+  public interface NestedInteger {
+    // Constructor initializes an empty nested list.
+//          pulic NestedInteger();
+
+    // Constructor initializes a single integer.
+//          public NestedIntegerdInteger(int value);
+
+    // @return true if this NestedInteger holds a single integer, rather than a nested list.
+    public boolean isInteger();
+
+    // @return the single integer that this NestedInteger holds, if it holds a single integer
+    // Return null if this NestedInteger holds a nested list
+    public Integer getInteger();
+
+    // Set this NestedInteger to hold a single integer.
+    public void setInteger(int value);
+
+    // Set this NestedInteger to hold a nested list and adds a nested integer to it.
+    public void add(NestedInteger ni);
+
+    // @return the nested list that this NestedInteger holds, if it holds a nested list
+    // Return null if this NestedInteger holds a single integer
+    public List<NestedInteger> getList();
+  }
+
+  public int lastStoneWeight(int[] stones) {
+    PriorityQueue<Integer> q = new PriorityQueue<>(new Comparator<Integer>() {
+      @Override
+      public int compare(Integer o1, Integer o2) {
+        return o2.compareTo(o1);
+      }
+    });
+    for (int s : stones) {
+      q.add(s);
+    }
+    while (!q.isEmpty()) {
+      int a = q.poll();
+      if (q.isEmpty()) {
+        return a;
+      }
+      int b = q.poll();
+      if (a - b > 0) {
+        q.add(a - b);
+      }
+    }
+    return 0;
   }
 
 
@@ -1049,7 +1233,7 @@ public class Main {
       if (o == null || getClass() != o.getClass()) return false;
       Point point = (Point) o;
       return x == point.x &&
-              y == point.y;
+          y == point.y;
     }
 
     @Override
@@ -1241,9 +1425,9 @@ public class Main {
     return ans;
   }
 
-  Map<Array2.TreeNode, IntegerPair> map = new HashMap<>();
+  Map<TreeNode, IntegerPair> map = new HashMap<>();
 
-  public int rob(Array2.TreeNode root) {
+  public int rob(TreeNode root) {
     map.put(null, new IntegerPair(0, 0));
     if (map.containsKey(root)) {
       return Math.max(map.get(root).first, map.get(root).second);

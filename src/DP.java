@@ -2,6 +2,216 @@ import java.util.*;
 
 public class DP {
 
+  private int mod = 1000000007;
+
+  private int[][] dx = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
+
+  public boolean canPartitionKSubsets(int[] nums, int k) {
+    int sum = 0;
+    for (int n : nums) {
+      sum += n;
+    }
+    if (sum % k != 0) return false;
+    Arrays.sort(nums);
+    int[] curSums = new int[k];
+    Arrays.fill(curSums, 0);
+    return canPartitionKSubsets(nums.length - 1, nums, curSums, sum / k);
+  }
+
+  private boolean canPartitionKSubsets(int idx, int[] nums, int[] curSums, int target) {
+    if (idx == -1) {
+      return true;
+    }
+    for (int i = 0; i < curSums.length; i++) {
+      if (curSums[i] + nums[idx] <= target) {
+        curSums[i] += nums[idx];
+        if (canPartitionKSubsets(idx - 1, nums, curSums, target)) {
+          return true;
+        }
+        curSums[i] -= nums[idx];
+      }
+      if (curSums[i] == 0) break;
+    }
+    return false;
+  }
+
+
+  private int[][][] pathDp;
+
+  public int findPaths(int m, int n, int N, int i, int j) {
+    pathDp = new int[m][n][N + 1];
+    for (int[][] arr1 : pathDp) {
+      for (int[] arr2 : arr1) {
+        Arrays.fill(arr2, -1);
+      }
+    }
+    return findPathsUtil(i, j, m, n, N);
+  }
+
+  private int findPathsUtil(int x, int y, int m, int n, int stepsLeft) {
+    if (stepsLeft == 0) {
+      return 0;
+    }
+    if (pathDp[x][y][stepsLeft] != -1) {
+      return pathDp[x][y][stepsLeft];
+    }
+    int res = 0;
+    for (int i = 0; i < 4; i++) {
+      int newX = x + dx[i][0];
+      int newY = y + dx[i][1];
+      if (!isValid(newX, newY, m, n)) {
+        res++;
+      } else {
+        res = (res + findPathsUtil(newX, newY, m, n, stepsLeft - 1)) % mod;
+      }
+    }
+    pathDp[x][y][stepsLeft] = res;
+    return res;
+  }
+
+  public int lastStoneWeightII(int[] stones) {
+    int totalsum = 0;
+    for (int stone : stones) {
+      totalsum += stone;
+    }
+    int target = (totalsum + 1) / 2;
+    boolean[] dp = new boolean[target + 1];
+    Arrays.fill(dp, false);
+    dp[0] = true;
+    int s2 = 0;
+    for (int num : stones) {
+      for (int i = target; i >= num; i--) {
+        dp[i] |= dp[i - num];
+        if (dp[i] && i > s2) {
+          s2 = i;
+        }
+      }
+    }
+    return totalsum - s2;
+  }
+
+  public boolean canPartition(int[] nums) {
+    int sum = 0;
+    for (int n : nums) {
+      sum += n;
+    }
+    if (sum % 2 == 1) return false;
+    int target = sum / 2;
+    boolean[] dp = new boolean[target + 1];
+    Arrays.fill(dp, false);
+    dp[0] = true;
+    for (int num : nums) {
+      for (int i = target; i >= num; i--) {
+        dp[i] |= dp[i - num];
+      }
+    }
+    return dp[target];
+  }
+
+  private Map<Integer, Integer>[] targetSumDp;
+
+  public int findTargetSumWays(int[] nums, int S) {
+    targetSumDp = new HashMap[nums.length];
+    return findTargetSubWays(nums.length - 1, nums, S);
+  }
+
+  private int findTargetSubWays(int idx, int[] nums, int sumLeft) {
+    if (idx == 0) {
+      int res = 0;
+      if (sumLeft == nums[idx]) {
+        res++;
+      }
+      if (sumLeft == -1 * nums[idx]) {
+        res++;
+      }
+      return res;
+    }
+    if (targetSumDp[idx] != null && targetSumDp[idx].containsKey(sumLeft)) {
+      return targetSumDp[idx].get(sumLeft);
+    }
+    if (targetSumDp[idx] == null) {
+      targetSumDp[idx] = new HashMap<>();
+    }
+    targetSumDp[idx].put(sumLeft, findTargetSubWays(idx - 1, nums, sumLeft - nums[idx]) +
+        findTargetSubWays(idx - 1, nums, sumLeft + nums[idx]));
+    return targetSumDp[idx].get(sumLeft);
+
+  }
+
+  public int change(int amount, int[] coins) {
+    int[] dp = new int[amount + 1];
+    Arrays.fill(dp, 0);
+    dp[0] = 1;
+    for (int coin : coins) {
+      for (int i = 1; i <= amount; i++) {
+        if (i - coin >= 0) {
+          dp[i] += dp[i - coin];
+        }
+      }
+    }
+    return dp[amount];
+  }
+
+  public int coinChangePractice(int[] coins, int amount) {
+    int[] dp = new int[amount + 1];
+    Arrays.fill(dp, Integer.MAX_VALUE);
+    dp[0] = 0;
+    for (int i = 1; i <= amount; i++) {
+      for (int coin : coins) {
+        if (i - coin >= 0 && dp[i - coin] != Integer.MAX_VALUE) {
+          dp[i] = Math.min(dp[i], dp[i - coin] + 1);
+        }
+      }
+    }
+    if (dp[amount] == Integer.MAX_VALUE) return -1;
+    return dp[amount];
+  }
+
+  public int longestStrChain(String[] words) {
+    int n = words.length;
+    Arrays.sort(words, new Comparator<String>() {
+      @Override
+      public int compare(String o1, String o2) {
+        return o1.length() - o2.length();
+      }
+    });
+    int[] lis = new int[n];
+    Arrays.fill(lis, 1);
+    int res = 1;
+    for (int i = 1; i < n; i++) {
+      for (int j = 0; j < i; j++) {
+        if (isPred(words[j], words[i]) && lis[j] + 1 > lis[i]) {
+          lis[i] = lis[j] + 1;
+          res = Math.max(res, lis[i]);
+        }
+      }
+    }
+    return res;
+  }
+
+  private boolean isPred(String w1, String w2) {
+    if (w1.length() != w2.length() - 1) {
+      return false;
+    }
+    int j = 0, i = 0;
+    boolean allowed = true;
+    while (j < w2.length() - 1) {
+      if (w1.charAt(i) != w2.charAt(j)) {
+        if (!allowed) {
+          return false;
+        }
+        allowed = false;
+        j++;
+      } else {
+        i++;
+        j++;
+      }
+    }
+    if (i < w1.length()) {
+      return (w1.charAt(i) == w2.charAt(j)) || allowed;
+    }
+    return true;
+  }
 
   /*
   Every station is a candidate of the final solution. The main thing is: When exactly does it becomes part of the solution ->
@@ -880,8 +1090,8 @@ public class DP {
     }
     int daysDiff = days[curIdx] - days[passBoughtIdx];
     return (passType == 0 && daysDiff < 1)
-            || (passType == 1 && daysDiff < 7)
-            || (passType == 2 && daysDiff < 30);
+        || (passType == 1 && daysDiff < 7)
+        || (passType == 2 && daysDiff < 30);
   }
 
   public int rob(int[] nums) {
