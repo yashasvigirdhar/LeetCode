@@ -173,6 +173,597 @@ public class Graph {
       this.visited = visited;
     }
   }
+  public int[] gardenNoAdj(int n, int[][] paths) {
+    List<List<Integer>> graph = new ArrayList<>();
+    for (int i = 0; i <= n; i++) {
+      graph.add(new ArrayList<>());
+    }
+    for (int[] path : paths) {
+      graph.get(path[0]).add(path[1]);
+      graph.get(path[1]).add(path[0]);
+    }
+    int[] colors = new int[n + 1];
+    Arrays.fill(colors, -1);
+    for (int i = 1; i <= n; i++) {
+      if (colors[i] != -1) {
+        continue;
+      }
+      colors[i] = 1;
+      Stack<Integer> st = new Stack<>();
+      st.push(i);
+      while (!st.empty()) {
+        Integer peek = st.peek();
+        boolean unvisitedFound = false;
+        for (int neighbour : graph.get(peek)) {
+          if (colors[neighbour] == -1) {
+            assignColor(neighbour, graph, colors);
+            st.push(neighbour);
+            unvisitedFound = true;
+            break;
+          }
+        }
+        if (!unvisitedFound) {
+          st.pop();
+        }
+      }
+    }
+    int[] res = new int[n];
+    if (n >= 0) System.arraycopy(colors, 1, res, 0, n);
+    return res;
+  }
+
+  private void assignColor(int idx, List<List<Integer>> graph, int[] colors) {
+    boolean[] colorsLeft = new boolean[5];
+    Arrays.fill(colorsLeft, true);
+    for (int neighbour : graph.get(idx)) {
+      if (colors[neighbour] != -1) {
+        colorsLeft[colors[neighbour]] = false;
+      }
+    }
+    for (int i = 1; i <= 4; i++) {
+      if (colorsLeft[i]) {
+        colors[idx] = i;
+        return;
+      }
+    }
+  }
+
+  public int[] findRedundantDirectedConnection(int[][] edges) {
+    int n = edges.length;
+    int[] parent = new int[n + 1];
+    Arrays.fill(parent, -1);
+    int[][] candidateEdges = new int[][]{{-1, -1}, {-1, -1}};
+    int targetVertex = -1;
+
+    for (int[] edge : edges) {
+      if (parent[edge[1]] != -1) {
+        candidateEdges[0] = new int[]{parent[edge[1]], edge[1]};
+        candidateEdges[1] = edge;
+        targetVertex = edge[1];
+        break;
+      }
+      parent[edge[1]] = edge[0];
+    }
+
+
+    // check if loop present
+    int[] root = new int[n + 1];
+    for (int i = 1; i <= n; i++) {
+      root[i] = i;
+    }
+    for (int[] edge : edges) {
+      int u = edge[0];
+      int v = edge[1];
+      if (targetVertex != 1 && (candidateEdges[1][0] == u && candidateEdges[1][1] == v)) {
+        continue;
+      }
+      int parentU = findRootII(u, root);
+      // if parent of u is already v
+      if (parentU == v) {
+        // loop found
+        if (targetVertex == -1) {
+          // no candidate edges for vertex with in-degree two. return this edge
+          return edge;
+        } else {
+          // candidate edges exist, one of them will match with this one
+          return candidateEdges[0];
+        }
+      } else {
+        root[v] = parentU;
+      }
+    }
+
+    // no loop, candidate Edges defintely exist
+    return candidateEdges[1];
+  }
+
+  public double[] calcEquationUsingDFS(List<List<String>> equations, double[] values, List<List<String>> queries) {
+    Map<String, Map<String, Double>> graph = new HashMap<>();
+    for (int i = 0; i < equations.size(); i++) {
+      List<String> equation = equations.get(i);
+      String num = equation.get(0);
+      String deno = equation.get(1);
+
+      double val = values[i];
+      if (!graph.containsKey(num)) {
+        graph.put(num, new HashMap<>());
+      }
+      graph.get(num).put(deno, val);
+
+      double inverseVal = 1 / values[i];
+      if (!graph.containsKey(deno)) {
+        graph.put(deno, new HashMap<>());
+      }
+      graph.get(deno).put(num, inverseVal);
+    }
+
+    double[] res = new double[queries.size()];
+    for (int i = 0; i < queries.size(); i++) {
+      List<String> query = queries.get(i);
+      String num = query.get(0);
+      String deno = query.get(1);
+      if (!graph.containsKey(num)) {
+        res[i] = -1;
+        continue;
+      }
+      if (num.equals(deno)) {
+        res[i] = 1.0;
+        continue;
+      }
+      Map<String, Boolean> visited = new HashMap<>();
+      visited.put(num, true);
+      Stack<Pair<String, Double>> st = new Stack<>();
+      st.push(new Pair<>(num, 1.0));
+      boolean denoFound = false;
+      while (!st.empty()) {
+        Pair<String, Double> polled = st.peek();
+        Double ansTillNow = polled.second;
+        Map<String, Double> possibleDenos = graph.get(polled.first);
+        boolean unvisitedNeighbourFound = false;
+        for (Map.Entry<String, Double> entry : possibleDenos.entrySet()) {
+          if (visited.containsKey(entry.getKey())) {
+            continue;
+          }
+          unvisitedNeighbourFound = true;
+          double newAns = entry.getValue() * ansTillNow;
+          if (entry.getKey().equals(deno)) {
+            res[i] = newAns;
+            denoFound = true;
+          } else {
+            visited.put(entry.getKey(), true);
+            st.push(new Pair<>(entry.getKey(), newAns));
+          }
+          break;
+        }
+        if (denoFound) {
+          break;
+        }
+        if (!unvisitedNeighbourFound) {
+          st.pop();
+        }
+      }
+      if (!denoFound) {
+        res[i] = -1;
+      }
+    }
+    return res;
+  }
+
+  public double[] calcEquationUsingBFS(List<List<String>> equations, double[] values, List<List<String>> queries) {
+    Map<String, Map<String, Double>> graph = new HashMap<>();
+    for (int i = 0; i < equations.size(); i++) {
+      List<String> equation = equations.get(i);
+      String num = equation.get(0);
+      String deno = equation.get(1);
+
+      double val = values[i];
+      if (!graph.containsKey(num)) {
+        graph.put(num, new HashMap<>());
+      }
+      graph.get(num).put(deno, val);
+
+      double inverseVal = 1 / values[i];
+      if (!graph.containsKey(deno)) {
+        graph.put(deno, new HashMap<>());
+      }
+      graph.get(deno).put(num, inverseVal);
+    }
+
+    double[] res = new double[queries.size()];
+    for (int i = 0; i < queries.size(); i++) {
+      List<String> query = queries.get(i);
+      String num = query.get(0);
+      String deno = query.get(1);
+      if (!graph.containsKey(num)) {
+        res[i] = -1;
+        continue;
+      }
+      if (num.equals(deno)) {
+        res[i] = 1.0;
+      }
+      Map<String, Boolean> visited = new HashMap<>();
+      Queue<Pair<String, Double>> queue = new LinkedList<>();
+      queue.add(new Pair<>(num, 1.0));
+      visited.put(num, true);
+      boolean denoFound = false;
+      while (!queue.isEmpty()) {
+        Pair<String, Double> polled = queue.poll();
+        Double ansTillNow = polled.second;
+        Map<String, Double> possibleDenos = graph.get(polled.first);
+        for (Map.Entry<String, Double> entry : possibleDenos.entrySet()) {
+          if (visited.containsKey(entry.getKey())) {
+            continue;
+          }
+          if (entry.getKey().equals(deno)) {
+            res[i] = entry.getValue() * ansTillNow;
+            denoFound = true;
+            break;
+          }
+          visited.put(entry.getKey(), true);
+          queue.add(new Pair<>(entry.getKey(), entry.getValue() * ansTillNow));
+        }
+        if (denoFound) {
+          break;
+        }
+      }
+      if (!denoFound) {
+        res[i] = -1;
+      }
+    }
+    return res;
+  }
+
+  public int findCelebrity(int n) {
+    int[] degree = new int[n];
+    Arrays.fill(degree, 0);
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
+        if (j == i) {
+          continue;
+        }
+        if (knows(i, j)) {
+          degree[j]++;
+          degree[i]--;
+        }
+      }
+    }
+
+    int celebrity = -1;
+    for (int i = 0; i < n; i++) {
+      if (degree[i] == n - 1) {
+        if (celebrity == -1) {
+          celebrity = i;
+        } else {
+          return -1;
+        }
+      }
+    }
+    return celebrity;
+  }
+
+
+  boolean knows(int a, int b) {
+    return false;
+  }
+
+  public int findJudge(int n, int[][] trust) {
+    int[] degree = new int[n + 1];
+    Arrays.fill(degree, 0);
+    for (int[] t : trust) {
+      degree[t[1]]++;
+      degree[t[0]]--;
+    }
+
+    int judge = -1;
+    for (int i = 1; i <= n; i++) {
+      if (degree[i] == n - 1) {
+        if (judge == -1) {
+          judge = i;
+        } else {
+          return -1;
+        }
+      }
+    }
+    return judge;
+  }
+
+  public int[] findRedundantConnection(int[][] edges) {
+    int n = edges.length;
+    int[] roots = new int[n + 1];
+    for (int i = 1; i <= n; i++) {
+      roots[i] = i;
+    }
+    for (int[] edge : edges) {
+      int root1 = findRootII(edge[0], roots);
+      int root2 = findRootII(edge[1], roots);
+      if (root1 == root2) {
+        return edge;
+      } else {
+        roots[root1] = root2;
+      }
+    }
+    return new int[0];
+  }
+
+  private int findRootII(int i, int[] roots) {
+    while (roots[i] != i) {
+      roots[i] = roots[roots[i]];
+      i = roots[i];
+    }
+    return i;
+  }
+
+  private int[][] dx = new int[][]{{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
+
+  public String findShortestWay(int[][] maze, int[] start, int[] destination) {
+    int m = maze.length;
+    int n = maze[0].length;
+
+    int[][] distance = new int[m][n];
+    for (int[] arr : distance) {
+      Arrays.fill(arr, Integer.MAX_VALUE);
+    }
+    distance[start[0]][start[1]] = 0;
+
+    String[][] path = new String[m][n];
+    path[start[0]][start[1]] = "";
+
+    Queue<int[]> queue = new LinkedList<>();
+    queue.add(new int[]{start[0], start[1]});
+    while (!queue.isEmpty()) {
+      int[] polled = queue.poll();
+      int x = polled[0], y = polled[1];
+      if (isDestination(destination, x, y)) {
+        continue;
+      }
+      for (int i = 0; i < 4; i++) {
+        StringBuilder pathTillNow = new StringBuilder(path[x][y]);
+        int newX = x + dx[i][0];
+        int newY = y + dx[i][1];
+        int d = 1;
+        if (!isValidPoint(m, n, newX, newY) || maze[newX][newY] == 1) {
+          continue;
+        }
+        switch (i) {
+          case 0:
+            pathTillNow.append("u");
+            while (!isDestination(destination, newX, newY) && isValidPoint(m, n, newX - 1, newY) && maze[newX - 1][newY] == 0) {
+              newX--;
+              d++;
+            }
+            break;
+          case 1:
+            pathTillNow.append("r");
+            while (!isDestination(destination, newX, newY) && isValidPoint(m, n, newX, newY + 1) && maze[newX][newY + 1] == 0) {
+              newY++;
+              d++;
+
+            }
+            break;
+          case 2:
+            pathTillNow.append("d");
+            while (!isDestination(destination, newX, newY) && isValidPoint(m, n, newX + 1, newY) && maze[newX + 1][newY] == 0) {
+              newX++;
+              d++;
+            }
+            break;
+          case 3:
+            pathTillNow.append("l");
+            while (!isDestination(destination, newX, newY) && isValidPoint(m, n, newX, newY - 1) && maze[newX][newY - 1] == 0) {
+              newY--;
+              d++;
+            }
+            break;
+        }
+        if ((distance[x][y] + d < distance[newX][newY]) ||
+                ((distance[x][y] + d == distance[newX][newY] && pathTillNow.toString().compareTo(path[newX][newY]) < 0))) {
+          distance[newX][newY] = distance[x][y] + d;
+          path[newX][newY] = pathTillNow.toString();
+          queue.add(new int[]{newX, newY});
+        }
+      }
+    }
+    return distance[destination[0]][destination[1]] == Integer.MAX_VALUE ? "impossible" : path[destination[0]][destination[1]];
+  }
+
+  private boolean isDestination(int[] destination, int newX, int newY) {
+    return newX == destination[0] && newY == destination[1];
+  }
+
+  public int shortestDistance(int[][] maze, int[] start, int[] destination) {
+    int m = maze.length;
+    int n = maze[0].length;
+    int[][] distance = new int[m][n];
+    for (int[] arr : distance) {
+      Arrays.fill(arr, Integer.MAX_VALUE);
+    }
+    distance[start[0]][start[1]] = 0;
+    Queue<int[]> queue = new LinkedList<>();
+    queue.add(new int[]{start[0], start[1]});
+    int minDist = Integer.MAX_VALUE;
+    while (!queue.isEmpty()) {
+      int[] polled = queue.poll();
+      int x = polled[0], y = polled[1];
+      if (x == destination[0] && y == destination[1]) {
+        minDist = Math.min(minDist, distance[x][y]);
+        continue;
+      }
+      for (int i = 0; i < 4; i++) {
+        int newX = x + dx[i][0];
+        int newY = y + dx[i][1];
+        int d = 1;
+        if (!isValidPoint(m, n, newX, newY) || maze[newX][newY] == 1) {
+          continue;
+        }
+        switch (i) {
+          case 0:
+            while (isValidPoint(m, n, newX - 1, newY) && maze[newX - 1][newY] == 0) {
+              newX--;
+              d++;
+            }
+            break;
+          case 1:
+            while (isValidPoint(m, n, newX, newY + 1) && maze[newX][newY + 1] == 0) {
+              newY++;
+              d++;
+            }
+            break;
+          case 2:
+            while (isValidPoint(m, n, newX + 1, newY) && maze[newX + 1][newY] == 0) {
+              newX++;
+              d++;
+            }
+            break;
+          case 3:
+            while (isValidPoint(m, n, newX, newY - 1) && maze[newX][newY - 1] == 0) {
+              newY--;
+              d++;
+            }
+            break;
+        }
+        if (distance[x][y] + d < distance[newX][newY]) {
+          distance[newX][newY] = distance[x][y] + d;
+          queue.add(new int[]{newX, newY});
+        }
+      }
+    }
+    return minDist == Integer.MAX_VALUE ? -1 : minDist;
+  }
+
+  public boolean hasPath(int[][] maze, int[] start, int[] destination) {
+    int m = maze.length;
+    int n = maze[0].length;
+    int[][] distance = new int[m][n];
+    for (int[] arr : distance) {
+      Arrays.fill(arr, Integer.MAX_VALUE);
+    }
+    distance[start[0]][start[1]] = 0;
+    Queue<int[]> queue = new LinkedList<>();
+    queue.add(new int[]{start[0], start[1]});
+    while (!queue.isEmpty()) {
+      int[] polled = queue.poll();
+      int x = polled[0], y = polled[1];
+      if (x == destination[0] && y == destination[1]) {
+        return true;
+      }
+      for (int i = 0; i < 4; i++) {
+        int newX = x + dx[i][0];
+        int newY = y + dx[i][1];
+        if (!isValidPoint(m, n, newX, newY) || maze[newX][newY] == 1) {
+          continue;
+        }
+        switch (i) {
+          case 0:
+            while (isValidPoint(m, n, newX - 1, newY) && maze[newX - 1][newY] == 0) {
+              newX--;
+            }
+            break;
+          case 1:
+            while (isValidPoint(m, n, newX, newY + 1) && maze[newX][newY + 1] == 0) {
+              newY++;
+            }
+            break;
+          case 2:
+            while (isValidPoint(m, n, newX + 1, newY) && maze[newX + 1][newY] == 0) {
+              newX++;
+            }
+            break;
+          case 3:
+            while (isValidPoint(m, n, newX, newY - 1) && maze[newX][newY - 1] == 0) {
+              newY--;
+            }
+            break;
+        }
+        if (distance[x][y] + 1 < distance[newX][newY]) {
+          distance[newX][newY] = distance[x][y] + 1;
+          queue.add(new int[]{newX, newY});
+        }
+      }
+    }
+    return false;
+  }
+
+  public boolean isEscapePossible(int[][] blocked, int[] source, int[] target) {
+    return isFree(blocked, source, target) && isFree(blocked, target, source);
+
+  }
+
+  private boolean isFree(int[][] blocked, int[] cell, int[] target) {
+    Queue<int[]> queue = new LinkedList<>();
+    queue.add(new int[]{cell[0], cell[1], 0});
+    Set<String> visited = new HashSet<>();
+    visited.add(String.valueOf(cell[0]) + '#' + cell[1]);
+    while (!queue.isEmpty()) {
+      int[] polled = queue.poll();
+      int x = polled[0], y = polled[1];
+      int d = polled[2];
+      if (d == 100) {
+        return true;
+      }
+      if (x == target[0] && y == target[1]) {
+        return true;
+      }
+      for (int i = 0; i < 4; i++) {
+        int newX = x + dx[i][0];
+        int newY = y + dx[i][1];
+        if (!isValidPoint(1000000, 1000000, newX, newY)) {
+          continue;
+        }
+        String key = String.valueOf(newX) + '#' + newY;
+        if (visited.contains(key)) {
+          continue;
+        }
+        boolean isBlocked = false;
+        for (int j = 0; j < blocked.length; j++) {
+          if (blocked[j][0] == newX && blocked[j][1] == newY) {
+            isBlocked = true;
+            break;
+          }
+        }
+        if (!isBlocked) {
+          queue.add(new int[]{newX, newY, d + 1});
+        }
+      }
+    }
+    return false;
+  }
+
+  public int[][] colorBorder(int[][] grid, int r0, int c0, int color) {
+    int m = grid.length;
+    if (m == 0) return grid;
+    int n = grid[0].length;
+    int[][] res = new int[m][n];
+    for (int i = 0; i < m; i++) {
+      System.arraycopy(grid[i], 0, res[i], 0, n);
+    }
+
+    boolean[][] visited = new boolean[m][n];
+    Queue<int[]> queue = new LinkedList<>();
+    queue.add(new int[]{r0, c0});
+    visited[r0][c0] = true;
+    while (!queue.isEmpty()) {
+      int[] polled = queue.poll();
+      int x = polled[0], y = polled[1];
+      boolean shouldColor = false;
+      for (int i = 0; i < 4; i++) {
+        int newX = x + dx[i][0];
+        int newY = y + dx[i][1];
+        if (!isValidPoint(m, n, newX, newY) || grid[newX][newY] != grid[x][y]) {
+          shouldColor = true;
+          continue;
+        }
+        if (!visited[newX][newY]) {
+          visited[newX][newY] = true;
+          queue.add(new int[]{newX, newY});
+        }
+      }
+      if (shouldColor) {
+        res[x][y] = color;
+      }
+    }
+    return res;
+  }
+
 
   public int scheduleCourseDP(int[][] courses) {
     Arrays.sort(courses, Comparator.comparingInt(o -> o[1]));
@@ -490,8 +1081,6 @@ public class Graph {
       }
     }
   }
-
-  private int[][] dx = new int[][]{{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
 
   public int[][] updateMatrix(int[][] matrix) {
     int m = matrix.length;
@@ -1207,15 +1796,6 @@ public class Graph {
     @Override
     public int hashCode() {
       return Objects.hash(x, y);
-    }
-  }
-
-  class Pair<T> {
-    T first, second;
-
-    public Pair(T first, T second) {
-      this.first = first;
-      this.second = second;
     }
   }
 }

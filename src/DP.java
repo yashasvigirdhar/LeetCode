@@ -2,6 +2,36 @@ import java.util.*;
 
 public class DP {
 
+  public int oddEvenJumps(int[] a) {
+    int n = a.length;
+    boolean[][] dp = new boolean[n][2];
+    dp[n - 1][0] = true;
+    dp[n - 1][1] = true;
+    TreeMap<Integer, Integer> oddMap = new TreeMap<>();
+    oddMap.put(a[n - 1], n - 1);
+    for (int i = n - 2; i >= 0; i--) {
+      dp[i][1] = false;
+      if (oddMap.ceilingEntry(a[i]) != null) {
+        dp[i][1] = dp[oddMap.ceilingEntry(a[i]).getValue()][0];
+      }
+
+      dp[i][0] = false;
+      if (oddMap.floorEntry(a[i]) != null) {
+        dp[i][0] = dp[oddMap.floorEntry(a[i]).getValue()][1];
+      }
+      oddMap.put(a[i], i);
+    }
+
+    int res = 0;
+    for (int i = 0; i < n; i++) {
+      if (dp[i][1]) {
+        res++;
+      }
+    }
+    return res;
+
+  }
+
   private int mod = 1000000007;
 
   private int[][] dx = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
@@ -630,6 +660,10 @@ public class DP {
 
   int[][][] stocksDP;
 
+  public int maxProfitWithKTransactionsIterative(int k, int[] prices) {
+    return 0;
+  }
+
   public int maxProfitWithKTransactions(int k, int[] prices) {
     if (k > prices.length / 2) {
       return maxProfitWithMultipleTransactions(prices);
@@ -723,14 +757,16 @@ public class DP {
     if (prices.length == 0) {
       return 0;
     }
-    int[][] dp = new int[prices.length][2];
-    dp[0][0] = 0;
-    dp[0][1] = -prices[0];
+    int[] p = new int[2];
+    p[0] = 0;
+    p[1] = -prices[0];
     for (int i = 1; i < prices.length; i++) {
-      dp[i][0] = Math.max(dp[i - 1][0], dp[i - 1][1] + prices[i]);
-      dp[i][1] = Math.max(dp[i - 1][1], dp[i - 1][0] - prices[i]);
+      int[] temp = new int[2];
+      temp[0] = Math.max(p[0], p[1] + prices[i]);
+      temp[1] = Math.max(p[1], p[0] - prices[i]);
+      System.arraycopy(temp, 0, p, 0, 2);
     }
-    return Math.max(dp[prices.length][0], dp[prices.length][1]);
+    return Math.max(p[0], p[1]);
   }
 
   int[] xx = new int[]{-1, 0, 1, 0};

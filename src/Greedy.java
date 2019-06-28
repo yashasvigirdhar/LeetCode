@@ -5,6 +5,34 @@ import java.util.List;
 
 public class Greedy {
 
+  public int findMinArrowShotsPractice(int[][] points) {
+    int n = points.length;
+    if (n == 0) {
+      return 0;
+    }
+    int res = 1;
+    Arrays.sort(points, new Comparator<int[]>() {
+      @Override
+      public int compare(int[] o1, int[] o2) {
+        int c = o1[0] - o2[0];
+        if (c == 0) {
+          return o1[1] - o2[1];
+        }
+        return c;
+      }
+    });
+    int curEnd = points[0][1];
+    int idx = 1;
+    while (idx < n) {
+      if (points[idx][0] > curEnd) {
+        curEnd = points[idx][1];
+        res++;
+      }
+      idx++;
+    }
+    return res;
+  }
+
   class Time {
     int val;
     boolean isStart;

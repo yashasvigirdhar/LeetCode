@@ -384,6 +384,174 @@ public class Strings {
     return prev;
   }
 
+  public String longestDupSubstringRabinKarp(String s) {
+    int mod = 10000007;
+    int[] powers = new int[s.length()];
+    powers[0] = 1;
+    for (int i = 1; i < s.length(); i++) {
+      powers[i] = (powers[i - 1] * 26) % mod;
+    }
+    int b = 0, e = s.length() - 1;
+    String res = "";
+    while (b <= e) {
+      int mid = (b + e) / 2;
+      String ret = longestDupSubstringUtil(mid, s, mod, powers);
+      if (ret.equals("")) {
+        e = mid - 1;
+      } else {
+        res = ret;
+        b = mid + 1;
+      }
+    }
+    return res;
+  }
+
+  private String longestDupSubstringUtil(int l, String s, int mod, int[] powers) {
+    if (l == 0) return "";
+    Map<Integer, List<Integer>> set = new HashMap<>();
+    int cur = 0;
+    for (int i = 0; i < l; i++) {
+      cur = ((cur * 26) % mod + (s.charAt(i) - 'a')) % mod;
+    }
+    set.put(cur, new ArrayList<>());
+    set.get(cur).add(0);
+    for (int i = l; i < s.length(); i++) {
+      int toRemove = (powers[l - 1] * (s.charAt(i - l) - 'a')) % mod;
+      cur = (((cur - toRemove + mod) % mod) * 26) % mod;
+      int toAdd = s.charAt(i) - 'a';
+      cur = (cur + toAdd) % mod;
+      if (set.containsKey(cur)) {
+        for (int startPoint : set.get(cur))
+          if (s.substring(startPoint, startPoint + l).equals(s.substring(i - l + 1, i + 1))) {
+            return s.substring(i - l + 1, i + 1);
+          }
+      } else {
+        set.put(cur, new ArrayList<>());
+      }
+      set.get(cur).add(i - l + 1);
+
+    }
+    return "";
+  }
+
+  public String longestDupSubstringBruteForce(String s) {
+    String res = "";
+    Map<String, Integer> map = new HashMap<>();
+    for (int i = s.length() - 1; i >= 0; i--) {
+      if (i + 1 <= res.length()) {
+        continue;
+      }
+      StringBuilder b = new StringBuilder();
+      for (int j = i; j >= 0; j--) {
+        b.append(s.charAt(j));
+        String key = b.toString();
+        if (key.length() < res.length()) {
+          continue;
+        }
+        map.put(key, map.getOrDefault(key, 0) + 1);
+        if (map.get(key) >= 2 && key.length() > res.length()) {
+          res = key;
+        }
+      }
+    }
+    return res;
+  }
+
+  public List<List<String>> groupAnagramsII(String[] strs) {
+    Map<String, List<String>> map = new HashMap<>();
+    for (String s : strs) {
+      char[] chars = s.toCharArray();
+      Arrays.sort(chars);
+      String sorted = new String(chars);
+      if (!map.containsKey(sorted)) {
+        map.put(sorted, new ArrayList<>());
+      }
+      map.get(sorted).add(s);
+    }
+    List<List<String>> res = new ArrayList<>();
+    for (Map.Entry<String, List<String>> entry : map.entrySet()) {
+      res.add(entry.getValue());
+    }
+    return res;
+  }
+
+  public boolean isValid(String s) {
+    Stack<Character> st = new Stack<>();
+    for (int i = 0; i < s.length(); i++) {
+      char c = s.charAt(i);
+      if (c == ')' || c == '}' || c == ']') {
+        if (st.empty() || st.pop() != c) {
+          return false;
+        }
+      } else {
+        if (c == '(') {
+          st.push(')');
+        } else if (c == '{') {
+          st.push('}');
+        } else if (c == '[') {
+          st.push(']');
+        }
+      }
+    }
+    return st.empty();
+  }
+
+  public String addStrings(String num1, String num2) {
+    StringBuilder builder = new StringBuilder();
+    int i = num1.length() - 1, j = num2.length() - 1;
+    int carry = 0, sum;
+    while (i >= 0 && j >= 0) {
+      sum = (num1.charAt(i) - '0') + (num2.charAt(j) - '0') + carry;
+      carry = sum / 10;
+      builder.append((sum % 10) + '0');
+      i--;
+      j--;
+    }
+    while (i >= 0) {
+      sum = (num1.charAt(i) - '0') + carry;
+      carry = sum / 10;
+      builder.append((sum % 10) + '0');
+      i--;
+    }
+    while (j >= 0) {
+      sum = (num2.charAt(j) - '0') + carry;
+      carry = sum / 10;
+      builder.append((sum % 10) + '0');
+      j--;
+    }
+    if (carry > 0) {
+      builder.append('1');
+    }
+    builder.reverse();
+    return builder.toString();
+  }
+
+  public String licenseKeyFormatting(String s, int K) {
+    int curCount = 0;
+    StringBuilder res = new StringBuilder();
+    for (int i = s.length() - 1; i >= 0; i--) {
+      char curChar = s.charAt(i);
+      if (curChar != '-') {
+        curCount++;
+        if (Character.isLetter(curChar)) {
+          res.append(Character.toUpperCase(curChar));
+        } else {
+          res.append(curChar);
+        }
+        if (curCount == K) {
+          res.append("-");
+          curCount = 0;
+        }
+      }
+    }
+    res.reverse();
+
+    if (res.length() > 0 && res.charAt(0) == '-') {
+      return res.substring(1);
+    }
+    return res.toString();
+  }
+
   public String mostCommonWord(String paragraph, String[] banned) {
     HashSet<String> ban = new HashSet<>(Arrays.asList(banned));
     int maxCount = 0;

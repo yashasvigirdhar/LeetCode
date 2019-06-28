@@ -1,5 +1,31 @@
 public class LinkedLists {
 
+  public ListNode reverseListRecur(ListNode head) {
+    if (head == null || head.next == null) {
+      return head;
+    }
+    ListNode p = reverseListRecur(head.next);
+    head.next.next = head;
+    head.next = null;
+    return p;
+  }
+
+
+  public ListNode reverseList(ListNode head) {
+    if (head == null) {
+      return head;
+    }
+    ListNode prev = head, next = head.next;
+    prev.next = null;
+    while (next != null) {
+      ListNode t = next.next;
+      next.next = prev;
+      prev = next;
+      next = t;
+    }
+    return prev;
+  }
+
   public Node insert(Node head, int insertVal) {
     Node root = head;
     if (root == null) {
@@ -56,7 +82,9 @@ public class LinkedLists {
       val = _val;
       next = _next;
     }
-  };
+  }
+
+  ;
 }
 
 

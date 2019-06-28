@@ -112,6 +112,345 @@ public class Tree {
     return cur;
   }
 
+  public NodeParent inorderSuccessor(NodeParent p) {
+    NodeParent ans = null;
+    if (p.right != null) {
+      ans = p.right;
+      while (ans.left != null) {
+        ans = ans.left;
+      }
+      return ans;
+    }
+    while (p.parent != null) {
+      if (p.parent.left == p) {
+        ans = p.parent;
+        break;
+      }
+      p = p.parent;
+    }
+    return ans;
+  }
+
+  class NodeParent {
+    public int val;
+    public NodeParent left;
+    public NodeParent right;
+    public NodeParent parent;
+  }
+
+  ;
+
+  public TreeNode inorderSuccessorII(TreeNode root, TreeNode p) {
+    TreeNode succ = null;
+    while (root != null) {
+      if (p.val < root.val) {
+        succ = root;
+        root = root.left;
+      } else {
+        root = root.right;
+      }
+    }
+    return succ;
+  }
+
+  public TreeNode inorderSuccessor(TreeNode root, TreeNode p) {
+    if (root == null) {
+      return null;
+    }
+    if (p.right != null) {
+      TreeNode ans = p.right;
+      while (ans.left != null) {
+        ans = ans.left;
+      }
+      return ans;
+    }
+    Stack<TreeNode> st = new Stack<>();
+    boolean pCrossed = false;
+    fillStack(st, root, p);
+    while (!st.empty()) {
+      TreeNode popped = st.pop();
+      if (pCrossed) {
+        return popped;
+      }
+      if (popped == p) {
+        pCrossed = true;
+      }
+      if (popped.right != null) {
+        fillStack(st, popped.right, p);
+      }
+    }
+    return null;
+  }
+
+  private void fillStack(Stack<TreeNode> stack, TreeNode root, TreeNode p) {
+    stack.push(root);
+    while (root != p && root.left != null) {
+      root = root.left;
+      stack.push(root);
+    }
+  }
+
+  public int maxDepth(Node root) {
+    if (root == null) {
+      return 0;
+    }
+    int maxFromChildren = 0;
+    for (int i = 0; i < root.children.size(); i++) {
+      maxFromChildren = Math.max(maxFromChildren, maxDepth(root.children.get(i)));
+    }
+    return maxFromChildren + 1;
+  }
+
+  public List<List<Integer>> levelOrder(Node root) {
+    List<List<Integer>> res = new ArrayList<>();
+    if (root == null) {
+      return res;
+    }
+
+    List<Integer> arr = new ArrayList<>();
+    arr.add(root.val);
+    res.add(arr);
+
+    Queue<Node> queue = new LinkedList<>();
+    queue.add(root);
+    while (queue.size() > 0) {
+      List<Node> temp = new ArrayList<>();
+      List<Integer> vals = new ArrayList<>();
+      while (!queue.isEmpty()) {
+        Node polled = queue.poll();
+        for (int i = 0; i < polled.children.size(); i++) {
+          Node child = polled.children.get(i);
+          if (child != null) {
+            temp.add(child);
+            vals.add(child.val);
+          }
+        }
+      }
+      if (temp.size() > 0) {
+        res.add(vals);
+        queue.addAll(temp);
+      }
+    }
+    return res;
+  }
+
+  public List<Integer> postorder(Node root) {
+    List<Integer> res = new ArrayList<>();
+    Stack<Node> st = new Stack<>();
+    st.push(root);
+    while (!st.empty()) {
+      Node popped = st.pop();
+      res.add(popped.val);
+      int i = 0;
+      while (i < popped.children.size()) {
+        st.push(popped.children.get(i));
+        i++;
+      }
+    }
+    Collections.reverse(res);
+    return res;
+  }
+
+  public List<Integer> preorderIterative(Node root) {
+    List<Integer> res = new ArrayList<>();
+    Stack<Node> st = new Stack<>();
+    st.push(root);
+    while (!st.empty()) {
+      Node popped = st.pop();
+      res.add(popped.val);
+      int i = popped.children.size() - 1;
+      while (i >= 0) {
+        st.push(popped.children.get(i));
+        i--;
+      }
+    }
+    return res;
+  }
+
+  public List<Integer> preorder(Node root) {
+    List<Integer> res = new ArrayList<>();
+    preOrderUtil(root, res);
+    return res;
+  }
+
+  private void preOrderUtil(Node root, List<Integer> res) {
+    if (root == null) {
+      return;
+    }
+    res.add(root.val);
+    for (int i = 0; i < root.children.size(); i++) {
+      preOrderUtil(root.children.get(i), res);
+    }
+  }
+
+  class Node {
+    public int val;
+    public List<Node> children;
+
+    public Node() {
+    }
+
+    public Node(int _val, List<Node> _children) {
+      val = _val;
+      children = _children;
+    }
+  }
+
+  ;
+
+  public List<Double> averageOfLevels(TreeNode root) {
+    List<Double> res = new LinkedList<>();
+    if (root == null) {
+      return res;
+    }
+    Queue<TreeNode> queue = new LinkedList<>();
+    queue.add(root);
+    while (queue.size() > 0) {
+      List<TreeNode> temp = new ArrayList<>();
+      long curSum = 0, count = 0;
+      while (!queue.isEmpty()) {
+        TreeNode polled = queue.poll();
+        count++;
+        curSum += polled.val;
+        if (polled.left != null) {
+          temp.add(polled.left);
+        }
+        if (polled.right != null) {
+          temp.add(polled.right);
+        }
+      }
+      res.add((double) curSum / (double) count);
+      queue.addAll(temp);
+    }
+    return res;
+  }
+
+  public TreeNode invertTreePractice(TreeNode root) {
+    if (root == null) {
+      return root;
+    }
+    root.left = invertTreePractice(root.left);
+    root.right = invertTreePractice(root.right);
+    TreeNode t = root.left;
+    root.left = root.right;
+    root.right = t;
+    return root;
+  }
+
+  int csum = 0;
+
+  public TreeNode bstToGst(TreeNode root) {
+    if (root == null) {
+      return root;
+    }
+    bstToGst(root.right);
+    csum += root.val;
+    root.val = csum;
+    bstToGst(root.left);
+    return root;
+  }
+
+  public int widthOfBinaryTreeOptimized(TreeNode root) {
+    if (root == null) {
+      return 0;
+    }
+    Queue<Pair<TreeNode, Integer>> queue = new LinkedList<>();
+    queue.add(new Pair<>(root, 0));
+    int maxLen = 1;
+    while (!queue.isEmpty()) {
+      List<Pair<TreeNode, Integer>> temp = new ArrayList<>();
+
+      while (!queue.isEmpty()) {
+        Pair<TreeNode, Integer> poll = queue.poll();
+        TreeNode parent = poll.first;
+        int parentIdx = poll.second;
+        if (parent.left != null) {
+          temp.add(new Pair<>(parent.left, 2 * parentIdx));
+        }
+        if (parent.right != null) {
+          temp.add(new Pair<>(parent.right, 2 * parentIdx + 1));
+        }
+      }
+
+      if (temp.isEmpty()) {
+        break;
+      }
+      maxLen = Math.max(maxLen, temp.get(temp.size() - 1).second - temp.get(0).second + 1);
+      queue.addAll(temp);
+    }
+    return maxLen;
+  }
+
+  public int widthOfBinaryTree(TreeNode root) {
+    if (root == null) {
+      return 0;
+    }
+    Queue<TreeNode> queue = new LinkedList<>();
+    queue.add(root);
+    int maxLen = 1;
+    while (!queue.isEmpty()) {
+      List<TreeNode> temp = new ArrayList<>();
+      while (!queue.isEmpty()) {
+        TreeNode polled = queue.poll();
+        if (polled != null) {
+          temp.add(polled.left);
+          temp.add(polled.right);
+        } else {
+          temp.add(null);
+          temp.add(null);
+        }
+      }
+
+      int firstIdx = -1;
+      int lastIdx = -1;
+      for (int i = 0; i < temp.size(); i++) {
+        if (temp.get(i) != null) {
+          if (firstIdx == -1) {
+            firstIdx = i;
+            lastIdx = i;
+          } else {
+            lastIdx = i;
+          }
+        }
+      }
+      if (firstIdx == -1) {
+        break;
+      }
+      int curLen = lastIdx - firstIdx + 1;
+      maxLen = Math.max(maxLen, curLen);
+      for (int i = firstIdx; i <= lastIdx; i++) {
+        queue.add(temp.get(i));
+      }
+    }
+    return maxLen;
+  }
+
+  public List<Integer> largestValues(TreeNode root) {
+    List<Integer> res = new ArrayList<>();
+    if (root == null) {
+      return res;
+    }
+    Queue<TreeNode> queue = new LinkedList<>();
+    queue.add(root);
+    while (!queue.isEmpty()) {
+      List<TreeNode> temp = new ArrayList<>();
+      int maxTemp = Integer.MIN_VALUE;
+      while (!queue.isEmpty()) {
+        TreeNode polled = queue.poll();
+        maxTemp = Math.max(maxTemp, polled.val);
+        if (polled.left != null) {
+          temp.add(polled.left);
+        }
+        if (polled.right != null) {
+          temp.add(polled.right);
+        }
+      }
+      queue.addAll(temp);
+      res.add(maxTemp);
+    }
+    return res;
+  }
+
   public List<Integer> distanceK(TreeNode root, TreeNode target, int K) {
     Map<TreeNode, TreeNode> parentMap = new HashMap<>();
     populateParent(root, null, parentMap);
@@ -481,6 +820,44 @@ public class Tree {
     arr.remove(arr.size() - 1);
   }
 
+
+//  private int minWidth = Integer.MAX_VALUE, maxWidth = Integer.MIN_VALUE;
+
+  public List<List<Integer>> verticalOrder(TreeNode root) {
+    Map<Integer, List<Pair<Integer, Integer>>> map = new HashMap<>();
+    verticalOrder(root, 0, 0, map);
+    List<List<Integer>> ans = new ArrayList<>();
+    for (int i = minWidth; i <= maxWidth; i++) {
+      List<Pair<Integer, Integer>> value = map.get(i);
+      value.sort(new Comparator<Pair<Integer, Integer>>() {
+        @Override
+        public int compare(Pair<Integer, Integer> o1, Pair<Integer, Integer> o2) {
+          return o1.second - o2.second;
+        }
+      });
+      List<Integer> toAdd = new ArrayList<>();
+      for (Pair<Integer, Integer> p : value) {
+        toAdd.add(p.first);
+      }
+      ans.add(toAdd);
+    }
+    return ans;
+  }
+
+  private void verticalOrder(TreeNode root, int width, int depth, Map<Integer, List<Pair<Integer, Integer>>> res) {
+    if (root == null) {
+      return;
+    }
+    minWidth = Math.min(minWidth, width);
+    maxWidth = Math.max(maxWidth, width);
+    if (!res.containsKey(width)) {
+      res.put(width, new ArrayList<>());
+    }
+    res.get(width).add(new Pair<>(root.val, depth));
+    verticalOrder(root.left, width - 1, depth + 1, res);
+    verticalOrder(root.right, width + 1, depth + 1, res);
+  }
+
   int ans;
 
   public int sumRootToLeafII(TreeNode root) {
@@ -581,32 +958,32 @@ public class Tree {
   private int pathCount = 0;
   private Map<Integer, Integer> m;
 
-//  public int pathSum3(TreeNode root, int sum) {
-//    m1 = new HashMap<>();
-//    m1.put(0, 1);
-//    if (root == null) {
-//      return 0;
-//    }
-//    pathSum3Util(root, 0, sum);
-//    return pathCount;
-//  }
+  public int pathSum3(TreeNode root, int sum) {
+    m1 = new HashMap<>();
+    m1.put(0, 1);
+    if (root == null) {
+      return 0;
+    }
+    pathSum3Util(root, 0, sum);
+    return pathCount;
+  }
 
-//  private void pathSum3Util(TreeNode root, int sum, int requiredSum) {
-//    if (root == null) {
-//      return;
-//    }
-//    int curSum = sum + root.val;
-//    if (map.containsKey(curSum - requiredSum)) {
-//      pathCount++;
-//    }
-//    map.put(curSum, map.getOrDefault(curSum, 0) + 1);
-//    pathSum3Util(root.left, curSum, requiredSum);
-//    pathSum3Util(root.right, curSum, requiredSum);
-//    map.put(curSum, map.getOrDefault(curSum, 0) - 1);
-//    if (map.get(curSum) == 0) {
-//      map.remove(curSum);
-//    }
-//  }
+  private void pathSum3Util(TreeNode root, int sum, int requiredSum) {
+    if (root == null) {
+      return;
+    }
+    int curSum = sum + root.val;
+    if (map.containsKey(curSum - requiredSum)) {
+      pathCount++;
+    }
+    map.put(curSum, map.getOrDefault(curSum, 0) + 1);
+    pathSum3Util(root.left, curSum, requiredSum);
+    pathSum3Util(root.right, curSum, requiredSum);
+    map.put(curSum, map.getOrDefault(curSum, 0) - 1);
+    if (map.get(curSum) == 0) {
+      map.remove(curSum);
+    }
+  }
 
   public boolean hasPathSum2(TreeNode root, int sum) {
     if (root == null) {
@@ -859,43 +1236,42 @@ public class Tree {
   }
 
 
-//  private Map<Integer, Integer> map = new HashMap<>();
-////  private int maxCount = 0;
-//
-//  public int[] findFrequentTreeSum(TreeNode root) {
-//    sumUtil(root);s
-//    ArrayList<Integer> ans = new ArrayList<>();
-//    for (Map.Entry<Integer, Integer> entry : map.entrySet()) {
-//      if (entry.getValue() == maxCount) {
-//        ans.add(entry.getValue());
-//      }
-//    }
-//    return ans.stream().mapToInt(Integer::intValue).toArray();
-////      return map.entrySet()
-////              .stream()
-////              .filter(x -> x.getValue() == maxCount)
-////              .map(Map.Entry::getKey)
-////              .mapToInt(Integer::intValue).toArray();
-//  }
-//
-//
-//  private int sumUtil(TreeNode root) {
-//    if (root == null) {
-//      return 0;
-//    }
-//    int l = sumUtil(root.left);
-//    int r = sumUtil(root.right);
-//    int sum = l + r + root.val;
-//    if (!map.containsKey(sum)) {
-//      map.put(sum, 0);
-//    }
-//    int newCount = map.get(sum) + 1;
-//    map.put(sum, newCount);
-//    if (newCount > maxCount) {
-//      maxCount = newCount;
-//    }
-//    return sum;
-//  }
+  private Map<Integer, Integer> map = new HashMap<>();
+
+  public int[] findFrequentTreeSum(TreeNode root) {
+    sumUtil(root);
+    ArrayList<Integer> ans = new ArrayList<>();
+    for (Map.Entry<Integer, Integer> entry : map.entrySet()) {
+      if (entry.getValue() == maxCount) {
+        ans.add(entry.getValue());
+      }
+    }
+    return ans.stream().mapToInt(Integer::intValue).toArray();
+//      return map.entrySet()
+//              .stream()
+//              .filter(x -> x.getValue() == maxCount)
+//              .map(Map.Entry::getKey)
+//              .mapToInt(Integer::intValue).toArray();
+  }
+
+
+  private int sumUtil(TreeNode root) {
+    if (root == null) {
+      return 0;
+    }
+    int l = sumUtil(root.left);
+    int r = sumUtil(root.right);
+    int sum = l + r + root.val;
+    if (!map.containsKey(sum)) {
+      map.put(sum, 0);
+    }
+    int newCount = map.get(sum) + 1;
+    map.put(sum, newCount);
+    if (newCount > maxCount) {
+      maxCount = newCount;
+    }
+    return sum;
+  }
 
   private static int lca2(TreeNode T, int v, int w) {
     ArrayList<Integer> pathToV = new ArrayList<>();
@@ -1141,17 +1517,17 @@ public class Tree {
     }
   }
 
-  public int isValidBST(TreeNode A, Integer maxValue, Integer minValue) {
+  public boolean isValidBST(TreeNode A, Integer maxValue, Integer minValue) {
     if (A == null) {
-      return 1;
+      return true;
     }
-    if (A.left != null && A.left.val >= A.val || (minValue != null && A.left.val <= minValue)) {
-      return 0;
+    if (A.left != null && (A.left.val >= A.val || (minValue != null && A.left.val <= minValue))) {
+      return false;
     }
-    if (A.right != null && A.right.val <= A.val || (maxValue != null && A.right.val >= maxValue)) {
-      return 0;
+    if (A.right != null && (A.right.val <= A.val || (maxValue != null && A.right.val >= maxValue))) {
+      return false;
     }
-    return (isValidBST(A.left, A.val, minValue) == 1 && isValidBST(A.right, maxValue, A.val) == 1) ? 1 : 0;
+    return isValidBST(A.left, A.val, minValue) && isValidBST(A.right, maxValue, A.val);
   }
 
 }
