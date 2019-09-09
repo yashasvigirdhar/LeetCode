@@ -1,5 +1,32 @@
 public class LinkedLists {
 
+  public ListNode detectCycle(ListNode head) {
+    if (head == null || head.next == null || head.next.next != null) {
+      return null;
+    }
+    ListNode hare = head, tor = head;
+    ListNode intersection = null;
+    while (tor.next != null && hare.next.next != null) {
+      tor = tor.next;
+      hare = hare.next.next;
+      if (tor == hare) {
+        intersection = tor;
+        break;
+      }
+      if (hare.next == null) {
+        break;
+      }
+    }
+    if(intersection == null){
+      return null;
+    }
+    while (head != intersection){
+      head = head.next;
+      intersection = intersection.next;
+    }
+    return head;
+  }
+
   public ListNode reverseListRecur(ListNode head) {
     if (head == null || head.next == null) {
       return head;

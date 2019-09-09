@@ -3,6 +3,270 @@ import java.util.stream.Collectors;
 
 public class Strings {
 
+  public List<String> topKFrequent(String[] words, int k) {
+
+    Map<String, Integer> counts = new HashMap<>();
+    for (String word : words) {
+      counts.put(word, counts.getOrDefault(word, 0) + 1);
+    }
+
+    PriorityQueue<Pair<Integer, String>> pq = new PriorityQueue<>(new Comparator<Pair<Integer, String>>() {
+      @Override
+      public int compare(Pair<Integer, String> o1, Pair<Integer, String> o2) {
+        int c = o1.first.compareTo(o2.first);
+        if (c != 0) {
+          return c;
+        }
+        return o2.second.compareTo(o1.second);
+      }
+    });
+
+    for (Map.Entry<String, Integer> entry : counts.entrySet()) {
+      Integer curCount = entry.getValue();
+      String curString = entry.getKey();
+      Pair<Integer, String> curPair = new Pair<>(curCount, curString);
+      if (pq.size() < k) {
+        pq.add(curPair);
+      }else {
+        int peekCount = pq.peek().first;
+        String peekString = pq.peek().second;
+        if(peekCount < curCount || (peekCount == curCount && curString.compareTo(peekString) < 0)){
+          pq.poll();
+          pq.add(curPair);
+        }
+      }
+    }
+
+    List<String> res = new ArrayList<>();
+    while (!pq.isEmpty()){
+      res.add(pq.poll().second);
+    }
+    Collections.reverse(res);
+    return res;
+  }
+
+  public boolean isAlienSorted(String[] words, String order) {
+    Map<Character, Integer> map = new HashMap<>();
+    for (int i = 0; i < order.length(); i++) {
+      map.put(order.charAt(i), i);
+    }
+    String[] sorted = new String[words.length];
+    System.arraycopy(words, 0, sorted, 0, words.length);
+    Arrays.sort(sorted, new Comparator<String>() {
+      @Override
+      public int compare(String o1, String o2) {
+        int i = 0, j = 0;
+        while (i < o1.length() && j < o2.length()) {
+          if (map.get(o1.charAt(i)) < map.get(o2.charAt(j))) {
+            return -1;
+          } else if (map.get(o1.charAt(i)) > map.get(o2.charAt(j))) {
+            return 1;
+          } else {
+            i++;
+            j++;
+          }
+        }
+        if (i < o1.length()) {
+          return 1;
+        } else if (j < o2.length()) {
+          return -1;
+        }
+        return 0;
+      }
+    });
+    int i = 0;
+    while (i < words.length) {
+      if (!sorted[i].equals(words[i])) {
+        return false;
+      }
+      i++;
+    }
+    return true;
+  }
+
+  public String minWindowPracticeMan(String s, String t) {
+    Map<Character, Integer> desired = new HashMap<>();
+    for (int i = 0; i < t.length(); i++) {
+      desired.put(t.charAt(i), desired.getOrDefault(t.charAt(i), 0) + 1);
+    }
+    int l = 0, r = 0;
+    Map<Character, Integer> current = new HashMap<>();
+    int required = 0;
+    String res = "";
+    while (r < s.length()) {
+      current.put(s.charAt(r), current.getOrDefault(s.charAt(r), 0) + 1);
+      if (current.get(s.charAt(r)).equals(desired.getOrDefault(s.charAt(r), 0))) {
+        required++;
+      }
+      while (l <= r && required == desired.size()) {
+        // update res
+        if (res.equals("") || res.length() > r - l + 1) {
+          res = s.substring(l, r + 1);
+        }
+        if (current.get(s.charAt(l)).equals(desired.getOrDefault(s.charAt(l), 0))) {
+          required--;
+        }
+        current.put(s.charAt(l), current.get(s.charAt(l)) - 1);
+        l++;
+      }
+      r++;
+    }
+    return res;
+  }
+
+  public int longestRepeatingSubstringDP(String s) {
+    int n = s.length();
+    int[][] dp = new int[n + 1][n + 1];
+    int res = 0;
+    for (int i = 1; i <= n; i++) {
+      for (int j = i - 1; j >= 1; j--) {
+        if (s.charAt(i - 1) == s.charAt(j - 1)) {
+          dp[i][j] = dp[i - 1][j - 1] + 1;
+          res = Math.max(res, dp[i][j]);
+        } else {
+          dp[i][j] = 0;
+        }
+      }
+    }
+    return res;
+  }
+
+  public int longestRepeatingSubstring(String S) {
+    Set<String> set = new HashSet<>();
+    int n = S.length();
+    int res = 0;
+    int b = 0, e = n - 1;
+    while (b <= e) {
+      int mid = (b + e) / 2;
+      if (searchSubstring(S, mid)) {
+        res = mid;
+        b = mid + 1;
+      } else {
+        e = mid - 1;
+      }
+    }
+    return res;
+  }
+
+  private boolean searchSubstring(String S, int len) {
+    Set<String> set = new HashSet<>();
+    int n = S.length();
+    for (int i = 0; i <= n - len; i++) {
+      String curStr = S.substring(i, i + len);
+      if (set.contains(curStr)) {
+        return true;
+      }
+      set.add(curStr);
+    }
+    return false;
+  }
+
+  public List<List<String>> findDuplicate(String[] paths) {
+    Map<String, List<String>> map = new HashMap<>();
+    for (String path : paths) {
+      String[] parts = path.split(" ");
+      String basePath = parts[0] + "/";
+      for (int i = 1; i < parts.length; i++) {
+        String[] filePart = parts[i].split("\\(");
+        if (!map.containsKey(filePart[1])) {
+          map.put(filePart[1], new ArrayList<>());
+        }
+        map.get(filePart[1]).add(basePath + filePart[0]);
+      }
+    }
+    List<List<String>> res = new ArrayList<>();
+    for (Map.Entry<String, List<String>> entry : map.entrySet()) {
+      if (entry.getValue().size() > 1) {
+        res.add(entry.getValue());
+      }
+    }
+    return res;
+  }
+
+  public String minWindowPractice(String s, String t) {
+    String res = "";
+    for (int i = 0; i < s.length(); i++) {
+      int idx = i, jdx = 0;
+      while (idx < s.length() && jdx < t.length()) {
+        if (s.charAt(idx) == t.charAt(jdx)) {
+          jdx++;
+        }
+        idx++;
+      }
+      if (jdx == t.length()) {
+        int newLen = idx - i + 1;
+        if (newLen < res.length() || res.equals("")) {
+          res = s.substring(i, idx + 1);
+        }
+      }
+    }
+    return res;
+  }
+
+  public int strStrUsingKmp(String haystack, String needle) {
+    int n = haystack.length();
+    char[] pat = needle.toCharArray();
+    if (pat.length == 0) return 0;
+    if (n == 0) return -1;
+    int[] lps = new int[pat.length];
+    int len = 0;
+    lps[0] = 0;
+    int idx = 1;
+    while (idx < pat.length) {
+      if (pat[idx] == pat[len]) {
+        len++;
+        lps[idx] = len;
+        idx++;
+      } else {
+        if (len != 0) {
+          len = lps[len - 1];
+        } else {
+          lps[idx] = 0;
+          idx++;
+        }
+      }
+    }
+    int i = 0, j = 0;
+
+    while (i < n) {
+      if (pat[j] == haystack.charAt(i)) {
+        j++;
+        i++;
+      } else {
+        if (j != 0) {
+          j = lps[j - 1];
+        } else {
+          i++;
+        }
+      }
+      if (j == pat.length) {
+        return i - pat.length + 1;
+      }
+    }
+    return -1;
+  }
+
+  public int strStr(String haystack, String needle) {
+    int n = haystack.length();
+    int m = needle.length();
+    if (m == 0) return 0;
+    for (int i = 0; i <= n - m; i++) {
+      int idx = i, jdx = 0;
+      while (idx < haystack.length() && jdx < m) {
+        if (haystack.charAt(idx) != needle.charAt(jdx)) {
+          break;
+        }
+        idx++;
+        jdx++;
+      }
+      if (jdx == m) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+
   public String rearrangeString(String s, int n) {
     Map<Character, Integer> map = new HashMap<>();
     for (int i = 0; i < s.length(); i++) {

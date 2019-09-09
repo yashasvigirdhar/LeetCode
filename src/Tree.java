@@ -4,6 +4,329 @@ import java.util.stream.Collectors;
 
 public class Tree {
 
+  public List<List<Integer>> findLeaves(TreeNode root) {
+    List<List<Integer>> res = new ArrayList<>();
+    while (root != null) {
+      List<Integer> cur = new ArrayList<>();
+      root = findLeaveUtil(root, cur);
+      res.add(cur);
+    }
+    return res;
+  }
+
+  private TreeNode findLeaveUtil(TreeNode root, List<Integer> cur) {
+    if (root == null) {
+      return null;
+    }
+    if (root.left == null && root.right == null) {
+      cur.add(root.val);
+      return null;
+    }
+    root.left = findLeaveUtil(root.left, cur);
+    root.right = findLeaveUtil(root.right, cur);
+    return root;
+  }
+
+  public int maxPathSumMock(TreeNode root) {
+    int[] res = new int[]{Integer.MIN_VALUE};
+    maxPathSumUtil(root, res);
+    return res[0];
+  }
+
+  private int maxPathSumUtil(TreeNode root, int[] res) {
+    if (root == null) {
+      return 0;
+    }
+    int l = Math.max(0, maxPathSumUtil(root.left, res));
+    int r = Math.max(0, maxPathSumUtil(root.right, res));
+    res[0] = Math.max(res[0], l + r + root.val);
+    return Math.max(l, r) + root.val;
+  }
+
+  public TreeNode lcaDeepestLeaves2(TreeNode root) {
+    int[] maxDepth = new int[]{-1};
+    calcDepth(root, 0, maxDepth);
+
+    return findLcaV2(root, 0, maxDepth[0]);
+  }
+
+  private TreeNode findLcaV2(TreeNode root, int depth, int maxDepth) {
+    if (root == null) {
+      return null;
+    }
+    if (depth == maxDepth) {
+      return root;
+    }
+    TreeNode left = findLcaV2(root.left, depth + 1, maxDepth);
+    TreeNode right = findLcaV2(root.right, depth + 1, maxDepth);
+    if (left != null && right != null) {
+      return root;
+    }
+    if (left != null) {
+      return left;
+    }
+    return right;
+  }
+
+  private void calcDepth(TreeNode root, int depth, int[] maxDepth) {
+    if (root == null) {
+      return;
+    }
+    if (root.left == null && root.right == null) {
+      if (depth > maxDepth[0]) {
+        maxDepth[0] = depth;
+      }
+      return;
+    }
+    calcDepth(root.left, depth + 1, maxDepth);
+    calcDepth(root.right, depth + 1, maxDepth);
+  }
+
+  public TreeNode lcaDeepestLeaves(TreeNode root) {
+    TreeNode[] parents = new TreeNode[1001];
+    populateParentsAgain(root, parents, null);
+
+    Set<TreeNode> leaves = new HashSet<>();
+    int[] maxDepth = new int[]{-1};
+    calcDepth(root, 0, maxDepth, leaves);
+
+    Iterator<TreeNode> iterator = leaves.iterator();
+    TreeNode lca = iterator.next();
+    while (iterator.hasNext()) {
+      lca = findLCA(lca, iterator.next(), parents);
+    }
+    return lca;
+  }
+
+  private TreeNode findLCA(TreeNode lca, TreeNode t2, TreeNode[] parents) {
+    int[] firstPath = new int[1001];
+    while (lca != null) {
+      firstPath[lca.val] = 1;
+      lca = parents[lca.val];
+    }
+
+    while (t2 != null) {
+      if (firstPath[t2.val] == 1) {
+        return t2;
+      }
+      t2 = parents[t2.val];
+    }
+    return null;
+  }
+
+  private void calcDepth(TreeNode root, int depth, int[] maxDepth, Set<TreeNode> leaves) {
+    if (root == null) {
+      return;
+    }
+    if (root.left == null && root.right == null) {
+      if (depth > maxDepth[0]) {
+        maxDepth[0] = depth;
+        leaves.clear();
+        leaves.add(root);
+      } else if (depth == maxDepth[0]) {
+        leaves.add(root);
+      }
+      return;
+    }
+    calcDepth(root.left, depth + 1, maxDepth, leaves);
+    calcDepth(root.right, depth + 1, maxDepth, leaves);
+  }
+
+  private void populateParentsAgain(TreeNode root, TreeNode[] parents, TreeNode parent) {
+    if (root == null) {
+      return;
+    }
+    parents[root.val] = parent;
+    populateParentsAgain(root.left, parents, root);
+    populateParentsAgain(root.right, parents, root);
+  }
+
+  public List<TreeNode> delNodes(TreeNode root, int[] to_delete) {
+    int[] deleted = new int[1001];
+    for (int d : to_delete) {
+      deleted[d] = 1;
+    }
+    ArrayList<TreeNode> res = new ArrayList<>();
+    populateParentsMan(root, null, deleted, res);
+    return res;
+  }
+
+  private void populateParentsMan(TreeNode root, TreeNode parent, int[] deleted, List<TreeNode> res) {
+    if (root == null) {
+      return;
+    }
+    if ((parent == null || deleted[parent.val] == 1) && deleted[root.val] == 0) {
+      // add to res
+      res.add(root);
+    }
+
+    if (root.left != null) {
+      populateParentsMan(root.left, root, deleted, res);
+      if (deleted[root.left.val] == 1) {
+        root.left = null;
+      }
+    }
+
+    if (root.right != null) {
+      populateParentsMan(root.right, root, deleted, res);
+      if (deleted[root.right.val] == 1) {
+        root.right = null;
+      }
+    }
+
+  }
+
+  public String smallestFromLeaf(TreeNode root) {
+    String[] res = new String[]{""};
+    if (root == null) return res[0];
+    smallestFromLeaf(root, new StringBuilder(), res);
+    return res[0];
+  }
+
+  private void smallestFromLeaf(TreeNode root, StringBuilder cur, String[] res) {
+    if (root.left == null && root.right == null) {
+      cur.insert(0, (char) (root.val + 'a'));
+      String s = cur.toString();
+      if (res[0].length() == 0 || s.compareTo(res[0]) < 0) {
+        res[0] = s;
+      }
+      cur.deleteCharAt(0);
+      return;
+    }
+    cur.insert(0, (char) (root.val + 'a'));
+    if (root.left != null) {
+      smallestFromLeaf(root.left, cur, res);
+    }
+    if (root.right != null) {
+      smallestFromLeaf(root.right, cur, res);
+    }
+    cur.deleteCharAt(0);
+  }
+
+  public int distributeCoinsPractice(TreeNode root) {
+    int[] res = new int[0];
+    distributeCoinsUtil(root, res);
+    return res[0];
+  }
+
+  private int distributeCoinsUtil(TreeNode root, int[] res) {
+    if (root == null) {
+      return 0;
+    }
+    int left = distributeCoinsUtil(root.left, res);
+    int right = distributeCoinsUtil(root.left, res);
+    res[0] += Math.abs(left);
+    res[0] += Math.abs(right);
+    int totalCoins = root.val + (left > 0 ? left : 0) + (right > 0 ? right : 0);
+    int requiredCoins = 1 + (left < 0 ? Math.abs(left) : 0) + (right < 0 ? Math.abs(right) : 0);
+    return totalCoins - requiredCoins;
+  }
+
+  public TreeNode lowestCommonAncestorBST(TreeNode root, TreeNode p, TreeNode q) {
+    if (root == null) {
+      return root;
+    }
+    int smallVal = Math.min(p.val, q.val);
+    int largeVal = Math.max(p.val, q.val);
+
+    if (root.val < smallVal) {
+      return lowestCommonAncestorBST(root.right, p, q);
+    }
+    if (root.val > largeVal) {
+      return lowestCommonAncestorBST(root.left, p, q);
+    }
+
+    if (root.val >= smallVal && root.val <= largeVal) {
+      return root;
+    }
+    return root;
+  }
+
+  public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+    Map<TreeNode, TreeNode> parents = new HashMap<>();
+    populateParents(root, parents, null);
+    Set<TreeNode> parent1 = new HashSet<>();
+    TreeNode tempParent = p;
+    while (tempParent != null) {
+      parent1.add(tempParent);
+      tempParent = parents.get(tempParent);
+    }
+    while (q != null) {
+      if (parent1.contains(q)) {
+        return q;
+      }
+      q = parents.get(q);
+    }
+    return null;
+  }
+
+  private void populateParents(TreeNode t, Map<TreeNode, TreeNode> parents, TreeNode parent) {
+    if (t == null) {
+      return;
+    }
+    parents.put(t, parent);
+    populateParents(t.left, parents, t);
+    populateParents(t.right, parents, t);
+  }
+
+  public int findBottomLeftValue(TreeNode root) {
+    int[] res = new int[]{-1, -1, -1};
+    findBottomLeftValueUtil(root, 0, 0, res);
+    return res[2];
+  }
+
+  private void findBottomLeftValueUtil(TreeNode root, int width, int depth, int[] res) {
+    if (root == null) {
+      return;
+    }
+    if (depth == res[0]) {
+      if (width < res[1]) {
+        res[0] = depth;
+        res[1] = width;
+        res[2] = root.val;
+      }
+    }
+    if (depth > res[0]) {
+      res[0] = depth;
+      res[1] = width;
+      res[2] = root.val;
+    }
+
+    findBottomLeftValueUtil(root.left, width - 1, depth + 1, res);
+    findBottomLeftValueUtil(root.right, width + 1, depth + 1, res);
+  }
+
+  public TreeNode sufficientSubset(TreeNode root, int limit) {
+    if (sufficientSubsetUtil(root, limit, 0)) {
+      return null;
+    }
+    return root;
+  }
+
+  private boolean sufficientSubsetUtil(TreeNode root, int limit, int curSum) {
+    if (root == null) {
+      return true;
+    }
+    if (root.left == null && root.right == null) {
+      return curSum + root.val < limit;
+    }
+    boolean l = sufficientSubsetUtil(root.left, limit, curSum + root.val);
+
+    if (l) {
+      root.left = null;
+    }
+
+    boolean r = sufficientSubsetUtil(root.right, limit, curSum + root.val);
+
+    if (r) {
+      root.right = null;
+    }
+    return l && r;
+  }
+
+  // for each node, caches the result for each edge. Each index in the array corresponds to one node.
+  // each index contains a map where each entry (neighbour) corresponds to it's computed result, which is a
+  // 2D array ( this 2D array is explained below).
   Map<Integer, int[]>[] dCache;
 
   public int[] sumOfDistancesInTree(int n, int[][] edges) {
@@ -25,6 +348,12 @@ public class Tree {
     return distances;
   }
 
+  /**
+   * @param idx
+   * @param parent
+   * @param graph
+   * @return a 2D array containing the result of idx, and count of nodes of subtree rooted at idx.
+   */
   private int[] sumOfDistanceInTree(int idx, int parent, List<List<Integer>> graph) {
     int res = 0;
     int numOfNodes = 1;
@@ -36,15 +365,15 @@ public class Tree {
       if (dCache[idx] == null) {
         dCache[idx] = new HashMap<>();
       }
-
+      // check if we have already traversed the edge from idx to neighbour
       if (dCache[idx].containsKey(neighbour)) {
         t = dCache[idx].get(neighbour);
       } else {
         t = sumOfDistanceInTree(neighbour, idx, graph);
         dCache[idx].put(neighbour, t);
       }
-      numOfNodes += t[1];
-      res += (t[0] + t[1]);
+      numOfNodes += t[1]; // add the no of nodes
+      res += (t[0] + t[1]); // add the result of that subtree. for every node, you add 1 to the result of neighbour.
     }
 
     return new int[]{res, numOfNodes};

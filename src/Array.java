@@ -4,6 +4,119 @@ import java.util.stream.IntStream;
 
 public class Array {
 
+  public int numSubarrayProductLessThanKUsingSum(int[] nums, int k) {
+    int l = 0, r = 0, n = nums.length;
+    double sum = 0;
+    int res = 0;
+    double required = (int) Math.log(k);
+    while (r < n) {
+      sum += Math.log(nums[r]);
+      while (l <= r && sum > required) {
+        sum -= nums[l];
+        l++;
+      }
+      if (sum < required) {
+        res += (r - l + 1);
+      }
+      r++;
+    }
+    return res;
+  }
+
+  public int numSubarrayProductLessThanK(int[] nums, int k) {
+    int l = 0, r = 0, n = nums.length;
+    int product = 1;
+    int res = 0;
+    while (r < n) {
+      product *= nums[r];
+      while (l <= r && product > k) {
+        product /= nums[l];
+        l++;
+      }
+      if (product < k) {
+        res += (r - l + 1);
+      }
+      r++;
+    }
+    return res;
+  }
+
+  public int subarraySumPractice(int[] nums, int k) {
+    Map<Integer, Integer> map = new HashMap<>();
+    map.put(0, 1);
+    int sum = 0;
+    int res = 0;
+    for (int n : nums) {
+      sum += n;
+      res += map.getOrDefault(sum - k, 0);
+      map.put(sum, map.getOrDefault(sum, 0) + 1);
+    }
+    return res;
+  }
+
+  public boolean splitArrayN2(int[] nums) {
+    int n = nums.length;
+    int[] sum = new int[n];
+    sum[0] = nums[0];
+    for (int i = 1; i < n; i++) {
+      sum[i] = sum[i - 1] + nums[i];
+    }
+    for (int j = 3; j < n - 3; j++) {
+      Set<Integer> sums = new HashSet<>();
+      for (int i = 1; i < j - 1; i++) {
+        if (sum[j - 1] == (sum[j - 1] - sum[i])) {
+          sums.add(sum[j - 1]);
+        }
+      }
+      for (int k = j + 2; k < n - 1; k++) {
+        if ((sum[k - 1] - sum[j]) == (sum[n - 1] - sum[k]) && sums.contains(sum[k - 1] - sum[j])) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  public boolean splitArrayN3(int[] nums) {
+    int n = nums.length;
+    int[] sum = new int[n];
+    sum[0] = nums[0];
+    for (int i = 1; i < n; i++) {
+      sum[i] = sum[i - 1] + nums[i];
+    }
+    for (int i = 1; i < n - 1; i++) {
+      int suma = sum[i - 1];
+      for (int j = i + 2; j < n - 1; j++) {
+        int sumb = sum[j - 1] - sum[i];
+        if (suma != sumb) {
+          continue;
+        }
+        for (int k = j + 2; k < n - 1; k++) {
+          int sumc = sum[k - 1] - sum[j];
+          int sumd = sum[n - 1] - sum[k];
+          if (suma == sumb && sumb == sumc && sumc == sumd) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  public int findDuplicate(int[] nums) {
+    int hare = nums[nums[0]], tor = nums[0];
+    while (hare != tor) {
+      hare = nums[nums[hare]];
+      tor = nums[tor];
+    }
+    int idx = 0;
+    while (idx != tor) {
+      idx = nums[idx];
+      tor = nums[tor];
+    }
+    return idx;
+  }
+
   public int[] rearrangeBarcodes(int[] barcodes) {
     Map<Integer, Integer> counts = new HashMap<>();
     for (int b : barcodes) {
@@ -25,7 +138,7 @@ public class Array {
       int[] polled = pq.poll();
       barcodes[idx++] = polled[0];
       polled[1]--;
-      if(prev != null && prev[1] > 0){
+      if (prev != null && prev[1] > 0) {
         pq.add(prev);
       }
       prev = polled;

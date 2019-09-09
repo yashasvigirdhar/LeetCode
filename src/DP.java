@@ -2,6 +2,175 @@ import java.util.*;
 
 public class DP {
 
+  public int coinChangeDP(int[] nums, int sum) {
+    int[] dp = new int[sum + 1];
+    Arrays.fill(dp, Integer.MAX_VALUE);
+    dp[0] = 0;
+    for (int num : nums) {
+      for (int j = 0; j <= sum; j++) {
+        if (j - num >= 0 && dp[j - num] != Integer.MAX_VALUE) {
+          dp[j] = Math.min(dp[j], dp[j - num] + 1);
+        }
+      }
+    }
+    return dp[sum] == Integer.MAX_VALUE ? -1 : dp[sum];
+  }
+
+
+  public boolean canPartitionDP(int[] nums) {
+    int sum = 0;
+    for (int n : nums) {
+      sum += n;
+    }
+    if (sum % 2 != 0) return false;
+    sum /= 2;
+    boolean[] dp = new boolean[sum + 1];
+    dp[0] = true;
+    for (int num : nums) {
+      for (int j = sum; j >= 0; j--) {
+        if (j - num >= 0) {
+          dp[j] |= dp[j - num];
+        }
+      }
+    }
+    return dp[sum];
+  }
+
+
+  private int[][][] stoneDP;
+  private int[] sums;
+
+  public int stoneGameII(int[] piles) {
+    int n = piles.length;
+    stoneDP = new int[n][2 * n][2];
+    sums = new int[n];
+    sums[n - 1] = piles[n - 1];
+    for (int i = n - 2; i >= 0; i--) {
+      sums[i] = sums[i + 1] + piles[i]; //the sum from piles[i] to the end
+    }
+    for (int[][] arr : stoneDP) {
+      for (int[] a : arr) {
+        Arrays.fill(a, -1);
+      }
+    }
+    return stoneGameIIUtil(piles, 0, 1, true);
+  }
+
+  private int stoneGameIIUtil(int[] piles, int idx, int m, boolean count) {
+    if (idx == piles.length) {
+      return 0;
+    }
+    if (piles.length - idx <= 2 * m) {
+      return count ? sums[idx] : 0;
+    }
+    if (stoneDP[idx][m][count ? 1 : 0] != -1) {
+      return stoneDP[idx][m][count ? 1 : 0];
+    }
+    int res = -1;
+    int curSum = 0;
+    for (int i = idx; i < piles.length && i - idx + 1 <= 2 * m; i++) {
+      int x = i - idx + 1;
+      curSum += piles[i];
+      int ret = stoneGameIIUtil(piles, i + 1, Math.max(x, m), !count);
+      if (count) {
+        ret += curSum;
+        if (res == -1 || ret > res) {
+          res = ret;
+        }
+      } else {
+        if (res == -1 || ret < res) {
+          res = ret;
+        }
+      }
+    }
+    stoneDP[idx][m][count ? 1 : 0] = res;
+    return res;
+  }
+
+  public int maxSumAfterPartitioning(int[] a, int K) {
+    int n = a.length;
+    int[] dp = new int[n];
+    for (int i = 0; i < n; i++) {
+      int max = 0;
+      for (int k = 0; k < K && i - k + 1 >= 0; k++) {
+        max = Math.max(max, a[i - k + 1]);
+        dp[i] = Math.max(dp[i], (i >= k ? dp[i - k] : 0) + max * k);
+      }
+    }
+    return dp[n - 1];
+  }
+
+  public int minHeightShelvesDP(int[][] books, int shelfWidth) {
+    int n = books.length;
+    int[] dp = new int[n + 1];
+    dp[0] = 0;
+    for (int i = 1; i <= n; i++) {
+      int height = books[i - 1][1];
+      int width = books[i - 1][0];
+      dp[i] = dp[i - 1] + height;
+      for (int j = i - 1; j >= 1 && width + books[j - 1][0] <= shelfWidth; j--) {
+        height = Math.max(height, books[j - 1][1]);
+        width += books[j - 1][0];
+        dp[i] = Math.min(dp[i], dp[j - 1] + height);
+      }
+    }
+    return dp[n];
+  }
+
+
+  public int findLongestChain(int[][] pairs) {
+    int n = pairs.length;
+    if (n == 0) {
+      return 0;
+    }
+    Arrays.sort(pairs, new Comparator<int[]>() {
+      @Override
+      public int compare(int[] o1, int[] o2) {
+        int c = o1[0] - o2[0];
+        if (c == 0) {
+          return o2[1] - o1[1];
+        }
+        return c;
+      }
+    });
+    int res = 1;
+    int[] dp = new int[n];
+    Arrays.fill(dp, 1);
+    for (int i = 1; i < n; i++) {
+      int[] cd = pairs[i];
+      for (int j = 0; j < i; j++) {
+        int[] ab = pairs[j];
+        if (dp[i] < dp[j] + 1 && cd[0] > ab[1]) {
+          dp[i] = dp[j] + 1;
+          res = Math.max(res, dp[i]);
+        }
+      }
+    }
+    return res;
+  }
+
+  public int minHeightShelves(int[][] books, int shelf_width) {
+    int[] res = {Integer.MAX_VALUE};
+    minHeightShelvesUtil(0, books, shelf_width, 0, shelf_width, 0, res);
+    return res[0];
+  }
+
+  private void minHeightShelvesUtil(int idx, int[][] books, int widthLeft, int curHeight, int shelfWidth, int totalHeight, int[] res) {
+    if (idx == books.length) {
+      totalHeight += curHeight;
+      res[0] = Math.min(totalHeight, res[0]);
+      return;
+    }
+
+    if (books[idx][0] <= widthLeft) {
+      // current shelf itself
+      minHeightShelvesUtil(idx + 1, books, widthLeft - books[idx][0], Math.max(curHeight, books[idx][1]), shelfWidth, totalHeight, res);
+
+    }
+    // new shelf
+    minHeightShelvesUtil(idx + 1, books, shelfWidth - books[idx][0], books[idx][1], shelfWidth, totalHeight + curHeight, res);
+  }
+
   public int oddEvenJumps(int[] a) {
     int n = a.length;
     boolean[][] dp = new boolean[n][2];

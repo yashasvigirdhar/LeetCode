@@ -7,7 +7,189 @@ public class Main {
 
 
   public static void main(String[] args) {
-    new Main().leastInterval(new char[]{'A', 'A', 'A', 'B', 'C'}, 2);
+   new DP().coinChangeDP(new int[]{1,2,5}, 11);
+  }
+
+  public int[][] kClosest(int[][] points, int k) {
+    PriorityQueue<Pair<Double, Integer>> pq = new PriorityQueue<>(new Comparator<Pair<Double, Integer>>() {
+      @Override
+      public int compare(Pair<Double, Integer> o1, Pair<Double, Integer> o2) {
+        return o1.first.compareTo(o2.first);
+      }
+    });
+    for (int i = 0; i < points.length; i++) {
+      int[] point = points[i];
+      double curDistance = Math.sqrt(point[0] * point[0] + point[1] * point[1]);
+      if (pq.size() < k) {
+        pq.add(new Pair<>(curDistance, i));
+      } else {
+        double maxDistance = pq.peek().first;
+        if (curDistance < maxDistance) {
+          pq.poll();
+          pq.add(new Pair<>(curDistance, i));
+        }
+      }
+    }
+    int[][] res = new int[k][2];
+    int idx = 0;
+    while (!pq.isEmpty()) {
+      Integer index = pq.poll().second;
+      res[idx++] = new int[]{points[index][0], points[index][1]};
+    }
+    return res;
+  }
+
+
+  private int howManyAgentsToAdd(int noOfCurAgents, List<List<Integer>> callsTimes) {
+    List<Pair<Integer, Boolean>> timeline = new ArrayList<>();
+    for (List<Integer> call : callsTimes) {
+      timeline.add(new Pair<>(call.get(0), true));
+      timeline.add(new Pair<>(call.get(1), false));
+    }
+    timeline.sort((o1, o2) -> {
+      int c = o1.first.compareTo(o2.first);
+      if (c != 0) {
+        return c;
+      }
+      if (o1.second) {
+        return -1;
+      }
+      if (o2.second) {
+        return 1;
+      }
+      return 0;
+    });
+    int ctr = 0;
+    int maxEmployees = 0;
+    for (Pair<Integer, Boolean> p : timeline) {
+      if (p.second) {
+        ctr++;
+        maxEmployees = Math.max(maxEmployees, ctr);
+      } else {
+        ctr--;
+      }
+    }
+    if (maxEmployees <= noOfCurAgents) {
+      return 0;
+    }
+    return maxEmployees - noOfCurAgents;
+  }
+
+
+  private List<Integer> findMultiples(int x, int y, int z, int n) {
+    List<Integer> res = new ArrayList<>();
+    for (int i = 1; i <= n; i++) {
+      if (((x != 0 && i % x == 0) || (y != 0 && i % y == 0))
+          && (z != 0 && i % z != 0)) {
+        res.add(i);
+      }
+    }
+    return res;
+  }
+
+
+  public List<List<String>> accountsMerge(List<List<String>> accounts) {
+    Map<String, HashSet<String>> res = new HashMap<>();
+    int counter = 0;
+
+    for (List<String> account : accounts) {
+
+      HashSet<String> curEmails = new HashSet<>();
+      String name = account.get(0);
+      for (int idx = 1; idx < account.size(); idx++) {
+        String email = account.get(idx);
+        curEmails.add(email);
+      }
+
+      System.out.println("processing " + name);
+
+      boolean addToPrevious;
+      List<String> toRemove = new ArrayList<>();
+      for (Map.Entry<String, HashSet<String>> entry : res.entrySet()) {
+        String key = entry.getKey();
+        String prevName = entry.getKey().split("#")[0];
+        Set<String> prevEmails = entry.getValue();
+        addToPrevious = false;
+        if (prevName.equals(name)) {
+          for (String prevEmail : prevEmails) {
+            if (curEmails.contains(prevEmail)) {
+              System.out.println("found common " + prevEmail);
+              addToPrevious = true;
+              break;
+            }
+          }
+        }
+        if (addToPrevious) {
+
+          curEmails.addAll(prevEmails);
+          toRemove.add(key);
+        }
+      }
+      for (String r : toRemove) {
+        res.remove(r);
+      }
+      res.put(name + "#" + ++counter, curEmails);
+    }
+    List<List<String>> ans = new ArrayList<>();
+    for (Map.Entry<String, HashSet<String>> entry : res.entrySet()) {
+      List<String> cur = new ArrayList<>();
+      cur.add(entry.getKey().split("#")[0]);
+      List<String> emails = new ArrayList<>(entry.getValue());
+      Collections.sort(emails);
+      cur.addAll(emails);
+      ans.add(cur);
+    }
+
+    return ans;
+  }
+
+  public int largestUniqueNumber(int[] a) {
+    int[] count = new int[1001];
+    Arrays.fill(count, 0);
+    for (int num : a) {
+      count[num]++;
+    }
+    for (int i = 1000; i >= 0; i--) {
+      if (count[i] == 1) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  public int longestWPI(int[] h) {
+    int n = h.length;
+    Map<Integer, Integer> indices = new HashMap<>();
+    int sum = 0;
+    int res = 0;
+    for (int i = 0; i < n; i++) {
+      sum += h[i];
+      if (sum > 0) {
+        res = i + 1;
+      } else {
+        indices.putIfAbsent(sum, i);
+        if (indices.containsKey(sum - 1)) {
+          res = Math.max(res, i - indices.get(sum - 1) + 1);
+        }
+      }
+    }
+    return res;
+  }
+
+  public int[] distributeCandies(int candies, int num_people) {
+    int[] people = new int[num_people];
+
+    int c = 0;
+    int left = candies;
+
+    while (left > 0) {
+      for (int i = 0; i < num_people && left > 0; i++) {
+        people[i] += Math.min(c * num_people + (i + 1), left);
+        left -= c * num_people + (i + 1);
+      }
+      c++;
+    }
+    return people;
   }
 
   public int leastInterval(char[] tasks, int n) {

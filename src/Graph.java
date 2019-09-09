@@ -2,6 +2,640 @@ import java.util.*;
 
 public class Graph {
 
+  public int[] findOrderMock(int n, int[][] prerequisites) {
+    List<List<Integer>> graph = new ArrayList<>();
+    for (int i = 0; i < n; i++) {
+      graph.add(new ArrayList<>());
+    }
+    int[] inDegree = new int[n];
+    for (int[] p : prerequisites) {
+      inDegree[p[0]]++;
+      graph.get(p[1]).add(p[0]);
+    }
+    Deque<Integer> q = new ArrayDeque<>();
+    for (int i = 0; i < n; i++) {
+      if (inDegree[i] == 0) {
+        q.addLast(i);
+      }
+    }
+    int[] res = new int[n];
+    int covered = 0;
+    while (!q.isEmpty()) {
+      Integer polled = q.pollFirst();
+      res[covered++] = polled;
+      for (int neighbour : graph.get(polled)) {
+        if (--inDegree[neighbour] == 0) {
+          q.addLast(neighbour);
+        }
+      }
+    }
+    if(covered == n){
+      return res;
+    }
+    return new int[0];
+  }
+
+  public boolean canFinishMock(int n, int[][] prerequisites) {
+    List<List<Integer>> graph = new ArrayList<>();
+    for (int i = 0; i < n; i++) {
+      graph.add(new ArrayList<>());
+    }
+    int[] inDegree = new int[n];
+    for (int[] p : prerequisites) {
+      inDegree[p[0]]++;
+      graph.get(p[1]).add(p[0]);
+    }
+    int covered = 0;
+    Deque<Integer> q = new ArrayDeque<>();
+    for (int i = 0; i < n; i++) {
+      if (inDegree[i] == 0) {
+        q.addLast(i);
+      }
+    }
+    while (!q.isEmpty()) {
+      Integer polled = q.pollFirst();
+      covered++;
+      for (int neighbour : graph.get(polled)) {
+        if (--inDegree[neighbour] == 0) {
+          q.addLast(neighbour);
+        }
+      }
+    }
+    return covered == n;
+  }
+
+  public int minimumSemesters(int n, int[][] relations) {
+    List<List<Integer>> graph = new ArrayList<>();
+    for (int i = 0; i <= n; i++) {
+      graph.add(new ArrayList<>());
+    }
+    int[] inDegree = new int[n + 1];
+    Arrays.fill(inDegree, 0);
+    for (int[] r : relations) {
+      graph.get(r[0]).add(r[1]);
+      inDegree[r[1]]++;
+    }
+    int res = 0;
+    Deque<Integer> q = new ArrayDeque<>();
+    for (int i = 1; i <= n; i++) {
+      if (inDegree[i] == 0) {
+        q.addLast(i);
+      }
+    }
+    int covered = 0;
+    while (!q.isEmpty()) {
+      res++;
+      int size = q.size();
+      while (size > 0) {
+        Integer polled = q.pollFirst();
+        covered++;
+        for (int neighbour : graph.get(polled)) {
+          inDegree[neighbour]--;
+          if (inDegree[neighbour] == 0) {
+            q.addLast(neighbour);
+          }
+        }
+        size--;
+      }
+
+    }
+
+    return (covered == n) ? res : -1;
+  }
+
+  public int minimumCost(int n, int[][] connections) {
+    int[] roots = new int[n + 1];
+    for (int i = 0; i <= n; i++) {
+      roots[i] = i;
+    }
+    Arrays.sort(connections, new Comparator<int[]>() {
+      @Override
+      public int compare(int[] o1, int[] o2) {
+        return o1[2] - o2[2];
+      }
+    });
+    int res = 0;
+    int components = n;
+    for (int[] conn : connections) {
+      int i = conn[0], j = conn[1], cost = conn[2];
+      int root1 = findRootIII(i, roots);
+      int root2 = findRootIII(j, roots);
+      if (root1 != root2) {
+        roots[root1] = root2;
+        components--;
+        res += cost;
+      }
+    }
+    if (components > 1) {
+      return -1;
+    }
+    return res;
+  }
+
+  private int findRootIII(int i, int[] roots) {
+    while (i != roots[i]) {
+      roots[i] = roots[roots[i]];
+      i = roots[i];
+    }
+    return i;
+  }
+
+  public int[] shortestAlternatingPaths(int n, int[][] red_edges, int[][] blue_edges) {
+    List<List<Integer>> red = new ArrayList<>();
+    for (int i = 0; i < n; i++) {
+      red.add(new ArrayList<>());
+    }
+    for (int[] edge : red_edges) {
+      red.get(edge[0]).add(edge[1]);
+    }
+
+    List<List<Integer>> blue = new ArrayList<>();
+    for (int i = 0; i < n; i++) {
+      blue.add(new ArrayList<>());
+    }
+    for (int[] edge : blue_edges) {
+      blue.get(edge[0]).add(edge[1]);
+    }
+
+    Deque<PathStateColor> q = new ArrayDeque<>();
+    Set<Pair<Integer, Integer>> visited = new HashSet<>();
+
+    int[] res = new int[n];
+    Arrays.fill(res, -1);
+    res[0] = 0;
+    visited.add(new Pair<>(0, 0));
+    visited.add(new Pair<>(0, 1));
+
+    for (int neighbour : red.get(0)) {
+      q.addLast(new PathStateColor(neighbour, 0, 1));
+    }
+
+    for (int neighbour : blue.get(0)) {
+      q.addLast(new PathStateColor(neighbour, 1, 1));
+    }
+
+    while (!q.isEmpty()) {
+      PathStateColor polled = q.pollFirst();
+      if (res[polled.idx] == -1) {
+        res[polled.idx] = polled.cost;
+      }
+      List<Integer> neighbours;
+      int nextColor;
+      if (polled.color == 0) {
+        neighbours = blue.get(polled.idx);
+        nextColor = 1;
+      } else {
+        neighbours = red.get(polled.idx);
+        nextColor = 0;
+      }
+      for (int neighbour : neighbours) {
+        Pair<Integer, Integer> p = new Pair<>(neighbour, nextColor);
+        if (!visited.contains(p)) {
+          q.addLast(new PathStateColor(neighbour, nextColor, polled.cost + 1));
+          visited.add(p);
+        }
+      }
+    }
+    return res;
+  }
+
+  class PathStateColor {
+    int idx;
+    int color;
+    int cost;
+
+    public PathStateColor(int idx, int color, int cost) {
+      this.idx = idx;
+      this.color = color;
+      this.cost = cost;
+    }
+  }
+
+  public int minMalwareSpread(int[][] graph, int[] initial) {
+    int n = graph.length;
+
+    int[] score = new int[n];
+    Arrays.fill(score, -1);
+
+    boolean[] virus = new boolean[n];
+    for (int i : initial) {
+      virus[i] = true;
+    }
+
+    boolean[] visited = new boolean[n];
+    Deque<Integer> q = new ArrayDeque<>();
+
+    for (int i : initial) {
+      if (score[i] != -1) {
+        continue;
+      }
+      score[i] = 0;
+      // count score
+
+      visited[i] = true;
+      q.addLast(i);
+      int count = 0;
+      boolean secondVirusFound = false;
+      while (!q.isEmpty()) {
+        Integer polled = q.pollFirst();
+        if (virus[polled] && polled != i) {
+          score[polled] = 0;
+          secondVirusFound = true;
+        }
+        count++;
+        for (int j = 0; j < n; j++) {
+          if (j != i && graph[polled][j] == 1 && !visited[j]) {
+            visited[j] = true;
+            q.addLast(j);
+          }
+        }
+      }
+      if (!secondVirusFound) {
+        score[i] = count;
+      }
+    }
+
+    int maxScore = -1, res = -1;
+    for (int i = 0; i < n; i++) {
+      if (score[i] > maxScore) {
+        maxScore = score[i];
+        res = i;
+      }
+    }
+    return res;
+  }
+
+  public int knightDialerDP(int N) {
+    int[][] nextMoves = {
+        {4, 6},
+        {6, 8},
+        {7, 9},
+        {4, 8},
+        {3, 9, 0},
+        {},
+        {1, 7, 0},
+        {2, 6},
+        {1, 3},
+        {2, 4}
+    };
+    int[][] dp = new int[10][5001];
+    for (int i = 0; i <= 9; i++) {
+      dp[i][0] = 0;
+      dp[i][1] = 1;
+    }
+    for (int i = 2; i <= N; i++) {
+      for (int j = 0; j <= 9; j++) {
+        dp[j][i] = 0;
+        for (int next : nextMoves[j]) {
+          dp[j][i] = (dp[j][i] + dp[next][i - 1]) % 1000000007;
+        }
+      }
+    }
+    int res = 0;
+    for (int i = 0; i <= 9; i++) {
+      res = (res + dp[i][N]) % 1000000007;
+    }
+    return res;
+  }
+
+  private int knightUtil(int idx, int n, int[][] dp, int[][] nextMoves) {
+    if (n == 0) {
+      return 1;
+    }
+    if (dp[idx][n] != -1) {
+      return dp[idx][n];
+    }
+    int res = 0;
+    for (int next : nextMoves[idx]) {
+      res = (res + knightUtil(next, n - 1, dp, nextMoves)) % 1000000007;
+    }
+    dp[idx][n] = res;
+    return dp[idx][n];
+  }
+
+  public int knightDialerBFS(int N) {
+    int[][] nextMoves = {
+        {4, 6},
+        {6, 8},
+        {7, 9},
+        {4, 8},
+        {3, 9, 0},
+        {},
+        {1, 7, 0},
+        {2, 6},
+        {1, 3},
+        {2, 4}
+    };
+    Deque<KnightState> q = new ArrayDeque<>();
+    for (int i = 0; i <= 9; i++) {
+      if (i == 5 && N > 1) {
+        continue;
+      }
+      q.addLast(new KnightState(i, N - 1));
+    }
+    int res = 0;
+    int mod = 1000000007;
+    while (!q.isEmpty()) {
+      KnightState polled = q.pollFirst();
+      if (polled.left == 0) {
+        // increment res
+        res = (res + 1) % mod;
+        continue;
+      }
+      for (int next : nextMoves[polled.cur]) {
+        q.addLast(new KnightState(next, polled.left - 1));
+      }
+    }
+    return res;
+  }
+
+  class KnightState {
+    int cur;
+    int left;
+
+    public KnightState(int cur, int left) {
+      this.cur = cur;
+      this.left = left;
+    }
+  }
+
+  public int earliestAcq(int[][] logs, int n) {
+    Arrays.sort(logs, new Comparator<int[]>() {
+      @Override
+      public int compare(int[] o1, int[] o2) {
+        return o1[0] - o2[0];
+      }
+    });
+    int[] roots = new int[n];
+    for (int i = 0; i < n; i++) {
+      roots[i] = i;
+    }
+    for (int[] log : logs) {
+      int root1 = findRootAgain(log[1], roots);
+      int root2 = findRootAgain(log[2], roots);
+      if (root1 != root2) {
+        n--;
+        roots[root1] = root2;
+        if (n == 1) {
+          return log[0];
+        }
+      }
+    }
+    return -1;
+  }
+
+  private int findRootAgain(int i, int[] roots) {
+    if (roots[i] != i) {
+      roots[i] = findRootAgain(roots[i], roots);
+    }
+    return roots[i];
+  }
+
+  public int maximumMinimumPath(int[][] A) {
+    int m = A.length;
+    if (m == 0) {
+      return 0;
+    }
+    int n = A[0].length;
+
+    PriorityQueue<PathStateMan> q = new PriorityQueue<>(new Comparator<PathStateMan>() {
+      @Override
+      public int compare(PathStateMan o1, PathStateMan o2) {
+        return o2.min - o1.min;
+      }
+    });
+
+
+    boolean[][] visited = new boolean[m][n];
+    visited[0][0] = true;
+
+    PathStateMan e = new PathStateMan(0, 0, A[0][0]);
+    q.add(e);
+
+    while (!q.isEmpty()) {
+      PathStateMan polled = q.poll();
+      int curX = polled.curX;
+      int curY = polled.curY;
+      int curMin = polled.min;
+      if (curX == m - 1 && curY == n - 1) {
+        return curMin;
+      }
+      for (int i = 0; i < 4; i++) {
+        int newX = curX + dx[i][0];
+        int newY = curY + dx[i][1];
+        if (isValidPoint(m, n, newX, newY) && !visited[newX][newY]) {
+          int newMin = Math.min(curMin, A[newX][newY]);
+          PathStateMan e1 = new PathStateMan(newX, newY, newMin);
+          q.add(e1);
+          visited[newX][newY] = true;
+        }
+      }
+    }
+    return -1;
+  }
+
+  class PathStateMan {
+    int curX, curY;
+    int min;
+
+    public PathStateMan(int curX, int curY, int min) {
+      this.curX = curX;
+      this.curY = curY;
+      this.min = min;
+    }
+  }
+
+  public int numEnclaves(int[][] A) {
+    int m = A.length;
+    if (m == 0) return 0;
+    int n = A[0].length;
+
+    boolean[][] visited = new boolean[m][n];
+    for (boolean[] arr : visited) {
+      Arrays.fill(arr, false);
+    }
+    int res = 0;
+    for (int i = 0; i < m; i++) {
+      for (int j = 0; j < n; j++) {
+        if (A[i][j] == 1 && !visited[i][j]) {
+          int[] count = new int[]{0};
+          boolean[] boundaryReached = new boolean[]{false};
+          dfsEnclaves(i, j, A, visited, boundaryReached, count);
+          if (!boundaryReached[0]) {
+            res += count[0];
+          }
+        }
+      }
+    }
+    return res;
+  }
+
+  private void dfsEnclaves(int x, int y, int[][] A, boolean[][] visited, boolean[] boundaryReached, int[] count) {
+    visited[x][y] = true;
+    count[0]++;
+    for (int i = 0; i < 4; i++) {
+      int newX = x + dx[i][0];
+      int newY = y + dx[i][1];
+      if (isValidPoint(A.length, A[0].length, newX, newY)) {
+        if (A[newX][newY] == 1 && !visited[newX][newY]) {
+          dfsEnclaves(newX, newY, A, visited, boundaryReached, count);
+        }
+      } else {
+        boundaryReached[0] = true;
+      }
+    }
+  }
+
+  public boolean canVisitAllRoomsShort(List<List<Integer>> rooms) {
+    int n = rooms.size();
+    Set<Integer> visited = new HashSet<>();
+    visited.add(0);
+    Deque<Integer> q = new ArrayDeque<>();
+    q.addLast(0);
+    while (!q.isEmpty()) {
+      Integer polled = q.pollFirst();
+      for (int neighbour : rooms.get(polled)) {
+        if (!visited.contains(neighbour)) {
+          visited.add(neighbour);
+          q.addLast(neighbour);
+          if (visited.size() == n) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  public boolean canVisitAllRooms(List<List<Integer>> rooms) {
+    int n = rooms.size();
+
+    boolean[] unlocked = new boolean[n];
+    Arrays.fill(unlocked, false);
+
+    Deque<PathStat> q = new ArrayDeque<>();
+    boolean[] visited = new boolean[n];
+    Arrays.fill(visited, false);
+    visited[0] = unlocked[0] = true;
+    q.addLast(new PathStat(0, visited));
+
+    Set<PathStat> set = new HashSet<>();
+    set.add(new PathStat(0, visited));
+
+
+    while (!q.isEmpty()) {
+      PathStat curState = q.pollFirst();
+      boolean[] curVisited = curState.visited;
+      if (checkIfAllVisited(unlocked)) {
+        return true;
+      }
+      int cur = curState.node;
+      for (int neighbour : rooms.get(cur)) {
+        boolean[] newVisited = new boolean[n];
+        System.arraycopy(curVisited, 0, newVisited, 0, n);
+        newVisited[neighbour] = true;
+        unlocked[neighbour] = true;
+        PathStat ps = new PathStat(neighbour, newVisited);
+        if (!set.contains(ps)) {
+          set.add(ps);
+          q.addLast(ps);
+        }
+      }
+    }
+    return false;
+  }
+
+  class PathStat {
+    int node;
+    boolean[] visited;
+
+    public PathStat(int node, boolean[] visited) {
+      this.node = node;
+      this.visited = visited;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      PathStat pathStat = (PathStat) o;
+      return node == pathStat.node &&
+          Arrays.equals(visited, pathStat.visited);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = Objects.hash(node);
+      result = 31 * result + Arrays.hashCode(visited);
+      return result;
+    }
+  }
+
+
+  private boolean checkIfAllVisited(boolean[] visited) {
+    for (boolean b : visited) {
+      if (!b) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public int shortestPathLength(int[][] graph) {
+
+    int n = graph.length;
+    Deque<PathState> q = new ArrayDeque<>();
+    Set<PathState> set = new HashSet<>();
+    for (int i = 0; i < n; i++) {
+      int mask = 1 << i;
+      q.addLast(new PathState(mask, 0, i));
+      set.add(new PathState(mask, 0, i));
+    }
+    while (!q.isEmpty()) {
+      PathState polled = q.pollFirst();
+      if (polled.visitedMask == ((1 << n + 1) - 1)) {
+        return polled.cost;
+      }
+
+      for (int neighbour : graph[polled.curr]) {
+        int newMask = polled.visitedMask | 1 << neighbour;
+        PathState state = new PathState(newMask, polled.cost + 1, neighbour);
+        if (!set.contains(state)) {
+          q.addLast(state);
+          set.add(state);
+        }
+      }
+    }
+    return 0;
+  }
+
+  class PathState {
+    int visitedMask;
+    int cost;
+    int curr;
+
+    public PathState(int visitedMask, int cost, int curr) {
+      this.visitedMask = visitedMask;
+      this.cost = cost;
+      this.curr = curr;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      PathState pathState = (PathState) o;
+      return visitedMask == pathState.visitedMask &&
+          cost == pathState.cost &&
+          curr == pathState.curr;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(visitedMask, cost, curr);
+    }
+  }
+
   public List<Integer> eventualSafeNodes(int[][] graph) {
     int n = graph.length;
     int[] safe = new int[n];
@@ -173,6 +807,7 @@ public class Graph {
       this.visited = visited;
     }
   }
+
   public int[] gardenNoAdj(int n, int[][] paths) {
     List<List<Integer>> graph = new ArrayList<>();
     for (int i = 0; i <= n; i++) {
@@ -556,7 +1191,7 @@ public class Graph {
             break;
         }
         if ((distance[x][y] + d < distance[newX][newY]) ||
-                ((distance[x][y] + d == distance[newX][newY] && pathTillNow.toString().compareTo(path[newX][newY]) < 0))) {
+            ((distance[x][y] + d == distance[newX][newY] && pathTillNow.toString().compareTo(path[newX][newY]) < 0))) {
           distance[newX][newY] = distance[x][y] + d;
           path[newX][newY] = pathTillNow.toString();
           queue.add(new int[]{newX, newY});
